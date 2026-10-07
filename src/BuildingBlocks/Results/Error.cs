@@ -6,11 +6,12 @@ namespace BuildingBlocks.Results;
 /// </summary>
 public sealed record Error(string Code, string Message, ErrorKind Kind, string? Field = null)
 {
-    public static Error Validation(string field, string code, string message) =>
+    // Every factory takes (code, message, field): one argument order, no swapped-string bugs.
+    public static Error Validation(string code, string message, string field) =>
         new(code, message, ErrorKind.Validation, field);
 
-    public static Error NotFound(string code, string message) =>
-        new(code, message, ErrorKind.NotFound);
+    public static Error NotFound(string code, string message, string? field = null) =>
+        new(code, message, ErrorKind.NotFound, field);
 
     public static Error Conflict(string code, string message, string? field = null) =>
         new(code, message, ErrorKind.Conflict, field);

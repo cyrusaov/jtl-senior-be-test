@@ -2,6 +2,7 @@ using BuildingBlocks.Http;
 using FastEndpoints;
 using Microsoft.AspNetCore.Http;
 using Users.Application.CreateUser;
+using Users.Endpoints.GetUserById;
 
 namespace Users.Endpoints.CreateUser;
 
@@ -34,8 +35,8 @@ internal sealed class CreateUserEndpoint : Endpoint<CreateUserRequest, CreateUse
             return;
         }
 
-        // Literal route until GET /users/{id} exists; then CreatedAtAsync<GetUserByIdEndpoint> (decision #18).
-        HttpContext.Response.Headers.Location = $"/users/{result.Value}";
-        await Send.ResponseAsync(new CreateUserResponse(result.Value), StatusCodes.Status201Created, ct);
+        // Location is derived from the GET endpoint's route, so the two can't drift apart (decision #18).
+        await Send.CreatedAtAsync<GetUserByIdEndpoint>(
+            new { id = result.Value }, new CreateUserResponse(result.Value), cancellation: ct);
     }
 }

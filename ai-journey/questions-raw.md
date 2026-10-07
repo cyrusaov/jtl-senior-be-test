@@ -166,3 +166,29 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - EF Core 9.0.x — Also runs on net8.0, a few newer features (none needed here). Mixed-version stack is something to explain for no benefit.
 
 ➡️ **My answer:** EF Core 8.0.x (Recommended)
+
+---
+
+### 2026-10-07 22:54
+
+**Q (Read path): Plan conflict: query handlers read the DbContext (Infrastructure) but Application must not depend on Infrastructure. How to resolve?**
+
+- Read-store port in Application (Recommended) — Application/GetUserById defines `IUserReadStore.GetByIdAsync(Guid) -> UserDto?`; Infrastructure implements it with AsNoTracking + Select projection. Handler stays in Application next to the command handler (same layout), layering rule holds, handler is unit-testable. Still not the aggregate repository, so decision #14's asymmetry survives. Cost: one small interface per read use case.
+- Query handlers in Infrastructure — Query + DTO in Application, handler in Infrastructure/Queries/ using the DbContext directly. Leanest read side, common in CQRS. Cost: command and query handlers live in different layers (the inconsistency you asked me to avoid), and the arch rule needs a carve-out.
+- Relax the layering rule — Let Application query handlers use UsersDbContext directly. Least code. Cost: EF Core leaks into Application; 'Application must not depend on Infrastructure' no longer holds and can't be arch-tested.
+
+➡️ **My answer:** Read-store port in Application (Recommended)
+
+**Q (Error API): Error factory signatures are inconsistent (Validation takes field first, Conflict/Unprocessable take it last). Fix?**
+
+- Unify to (code, message, field) (Recommended) — Every factory: Error.X(code, message, field?) — Validation keeps field required. Tiny change now (4 call sites), prevents swapped-argument bugs later.
+- Leave as is — No churn; the asymmetry stays and every new call site has to remember which order applies.
+
+➡️ **My answer:** Unify to (code, message, field) (Recommended)
+
+**Q (Errors home): Where should application-level errors (UsernameTaken, the new UserNotFound) live?**
+
+- One UserErrors catalog in Domain (Recommended) — Keep a single per-module list of error codes; 'username taken' and 'user not found' are still domain language even if the application layer detects them. One place for clients/devs to find every code. Cost: Domain holds errors it doesn't raise itself.
+- Split Domain / Application — VO errors stay in Domain/UserErrors; UsernameTaken and UserNotFound move to Application/UserApplicationErrors. Purer layering. Cost: two catalogs to search, more files for 4 errors.
+
+➡️ **My answer:** One UserErrors catalog in Domain (Recommended)

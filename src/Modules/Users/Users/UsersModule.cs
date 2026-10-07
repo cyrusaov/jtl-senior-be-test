@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Users.Application.GetUserById;
 using Users.Domain;
 using Users.Infrastructure;
 
@@ -16,7 +17,8 @@ public static class UsersModule
         var store = new InMemoryDatabaseRoot();
         services.AddDbContext<UsersDbContext>(o => o.UseInMemoryDatabase(UsersDbContext.Schema, store));
 
-        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserRepository, UserRepository>(); // write side
+        services.AddScoped<IUserReadStore, UserReadStore>();   // read side
 
         return services;
     }

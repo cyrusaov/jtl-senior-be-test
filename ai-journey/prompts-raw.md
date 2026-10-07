@@ -98,3 +98,22 @@ Before writing code, list any decision this slice needs that the plan doesn't co
 When done: run dotnet build and dotnet test, show a short summary of files added, tell me
 what you deliberately did NOT do, and suggest a commit message.
 </pasted_content id="8051">
+
+---
+
+### 2026-10-07 22:52 · session `8afeacf8`
+
+<pasted_content id="8051">
+Implement slice "Users: GetUserById" from ai-journey/plan.md.
+
+- Query: GetUserByIdQuery + handler returning a read model/DTO, never the aggregate.
+  The query must not change state.
+- Decide with me (if not already in decisions.md) whether the query side reads through the
+  repository or a separate read path, and why — keep it consistent with the plan.
+- Endpoint: GET by id, thin; 404 for unknown id, 400 for malformed id.
+- Tests: handler unit test or endpoint integration test for found / not found.
+
+Check that the command and query sides of the Users module now follow the same conventions
+(naming, folder layout, result/error handling). Point out any inconsistency before fixing it.
+Run build + tests, summarise, suggest a commit message.
+</pasted_content id="8051">

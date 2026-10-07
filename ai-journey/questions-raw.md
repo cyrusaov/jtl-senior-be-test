@@ -192,3 +192,14 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - Split Domain / Application — VO errors stay in Domain/UserErrors; UsernameTaken and UserNotFound move to Application/UserApplicationErrors. Purer layering. Cost: two catalogs to search, more files for 4 errors.
 
 ➡️ **My answer:** One UserErrors catalog in Domain (Recommended)
+
+---
+
+### 2026-10-07 23:07
+
+**Q (Contract): What should Users.Contracts return for a user lookup?**
+
+- bool ExistsAsync(Guid) (Recommended) — `IUserDirectory.ExistsAsync(Guid userId, ct)`, no DTO. Exactly what WorkItems needs today (assignee validation); smallest surface, nothing about a user leaks across the boundary, trivial to fake. Cost: if WorkItems later needs the username, the contract must grow (a deliberate, visible change).
+- UserSummary? FindAsync(Guid) — Returns a contract DTO `UserSummary(Guid Id, string Username)` or null. Ready for e.g. showing assignee names. Cost: exposes data nobody consumes yet, and once published, every field is a promise other modules can start depending on.
+
+➡️ **My answer:** bool ExistsAsync(Guid) (Recommended)

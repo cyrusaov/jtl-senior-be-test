@@ -38,15 +38,33 @@ public sealed class ModuleBoundaryTests
 
     [Theory]
     [MemberData(nameof(ModuleNames))]
-    public void Contracts_do_not_reference_any_module_implementation(string moduleName)
+    public void Contracts_depend_only_on_the_base_class_library(string moduleName)
     {
+        // Stricter than "no module implementation": no BuildingBlocks, EF Core or FastEndpoints either,
+        // so a consumer of a contract can never be coupled to anything but the contract itself.
         var contracts = Modules.Get(moduleName).Contracts;
 
-        var referenced = contracts.GetReferencedAssemblies().Select(a => a.Name).ToHashSet();
-        var offending = Modules.All.Select(m => m.ImplementationAssemblyName).Where(referenced.Contains);
+        var offending = contracts.GetReferencedAssemblies()
+            .Select(a => a.Name!)
+            .Where(name => !IsBaseClassLibrary(name));
 
         Assert.Empty(offending);
     }
+
+    [Theory]
+    [MemberData(nameof(ModuleNames))]
+    public void Module_implementation_publicly_exposes_only_its_entry_point(string moduleName)
+    {
+        // Everything else is internal, so even a stray project reference could not reach the internals.
+        var module = Modules.Get(moduleName);
+
+        var publicTypes = module.Implementation.GetExportedTypes().Select(t => t.FullName);
+
+        Assert.Equal([$"{moduleName}.{moduleName}Module"], publicTypes);
+    }
+
+    private static bool IsBaseClassLibrary(string assemblyName) =>
+        assemblyName is "netstandard" or "mscorlib" || assemblyName.StartsWith("System", StringComparison.Ordinal);
 
     private static string Describe(TestResult result, string rule) =>
         $"{rule}. Offending types: {string.Join(", ", result.FailingTypeNames ?? [])}";

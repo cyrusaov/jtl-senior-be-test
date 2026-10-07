@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Users.Application.GetUserById;
+using Users.Contracts;
 using Users.Domain;
 using Users.Infrastructure;
 
@@ -19,6 +20,7 @@ public static class UsersModule
 
         services.AddScoped<IUserRepository, UserRepository>(); // write side
         services.AddScoped<IUserReadStore, UserReadStore>();   // read side
+        services.AddScoped<IUserDirectory, UserDirectory>();   // public contract for other modules
 
         return services;
     }

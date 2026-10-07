@@ -117,3 +117,22 @@ Check that the command and query sides of the Users module now follow the same c
 (naming, folder layout, result/error handling). Point out any inconsistency before fixing it.
 Run build + tests, summarise, suggest a commit message.
 </pasted_content id="8051">
+
+---
+
+### 2026-10-07 23:03 · session `8afeacf8`
+
+<pasted_content id="8051">
+Implement slice "Users.Contracts" from ai-journey/plan.md — the public surface the Users
+module offers to other modules.
+
+- Expose only what WorkItems needs (e.g. an existence check for a user id) as an interface
+  plus contract DTOs in Users.Contracts. Contracts must not reference Users domain types.
+- Implement it inside the Users module (internal), registered via the module's DI extension.
+- Extend the architecture tests: other modules may reference Users.Contracts only, never
+  Users.Domain / Application / Infrastructure. Make the test fail first (temporarily) to prove
+  it actually catches a violation, then revert.
+
+Explain in 3–4 sentences why this contract shape, and log it in decisions.md.
+Run build + tests, suggest a commit message.
+</pasted_content id="8051">

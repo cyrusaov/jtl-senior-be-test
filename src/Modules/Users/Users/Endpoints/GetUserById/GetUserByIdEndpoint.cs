@@ -16,6 +16,9 @@ internal sealed class GetUserByIdEndpoint : Endpoint<GetUserByIdRequest, GetUser
         // No {id:guid} route constraint on purpose: a malformed id should be a 400, not a 404 "no such route".
         Get("/users/{id}");
         AllowAnonymous();
+        Description(b => b
+            .ProducesProblemDetails(StatusCodes.Status400BadRequest)
+            .ProducesProblemDetails(StatusCodes.Status404NotFound));
         Summary(s =>
         {
             s.Summary = "Get a user by id";

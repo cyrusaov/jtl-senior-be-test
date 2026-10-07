@@ -17,6 +17,7 @@ internal sealed class GetWorkItemsByAssigneeEndpoint
     {
         Get("/work-items");
         AllowAnonymous();
+        Description(b => b.ProducesProblemDetails(StatusCodes.Status400BadRequest));
         Summary(s =>
         {
             s.Summary = "List the work items assigned to a user";

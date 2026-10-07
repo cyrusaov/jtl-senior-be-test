@@ -16,6 +16,11 @@ internal sealed class CreateUserEndpoint : Endpoint<CreateUserRequest, CreateUse
     {
         Post("/users");
         AllowAnonymous();
+        Description(b => b
+            .ClearDefaultProduces(StatusCodes.Status200OK)
+            .Produces<CreateUserResponse>(StatusCodes.Status201Created)
+            .ProducesProblemDetails(StatusCodes.Status400BadRequest)
+            .ProducesProblemDetails(StatusCodes.Status409Conflict));
         Summary(s =>
         {
             s.Summary = "Create a user";

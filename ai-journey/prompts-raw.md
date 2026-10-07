@@ -324,3 +324,9 @@ yes, start with framework-free Results
 ### 2026-10-07 23:50 · session `8afeacf8`
 
 Continue with the layering and command/query architecture tests (finding CQRS-1)
+
+---
+
+### 2026-10-07 23:56 · session `8afeacf8`
+
+Continue with Swagger response types (FE-2): declare success and error types on each endpoint.

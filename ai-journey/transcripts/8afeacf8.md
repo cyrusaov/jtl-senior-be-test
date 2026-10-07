@@ -2409,3 +2409,87 @@ All three tests went red, each naming the offending type (`Users.Domain.UserCrea
 - The pending ai-journey updates: decision #26 (review triage), the independent-review section, and Correction #4.
 
 Next is the layering and command/query architecture tests (finding CQRS-1), which also makes the claim in `Messages.cs` true.
+
+---
+
+## 🧑 Me
+
+Continue with the layering and command/query architecture tests (finding CQRS-1)
+
+**🤖 Claude:**
+
+For CQRS-1 I'll add two test classes. They're split by concern, as `ModuleBoundaryTests` and `DomainIndependenceTests` already are.
+
+**`LayeringTests`**: dependency direction inside each module.
+
+| Layer | Must not depend on |
+|---|---|
+| Domain | own Application, Infrastructure, Endpoints |
+| Application | own Infrastructure, Endpoints; EF Core; ASP.NET Core; `BuildingBlocks.Http` |
+| Infrastructure | own Endpoints |
+| Endpoints | own Domain, Infrastructure; EF Core (endpoints only talk to Application) |
+
+Application is allowed to depend on FastEndpoints, because the command/query markers derive from its command bus. That's the cost accepted in decision #10.
+
+**`CqrsTests`**:
+- Every `ICommand<>` is named `*Command`, every `IQuery<>` is named `*Query`, and the reverse; both live in `<Module>.Application`.
+- Commands return only `Result<Guid>`, meaning "at most an id".
+- Query handlers never depend on a repository, so the write side is out of reach.
+
+Each test also asserts that it found something to check. Otherwise a renamed namespace would make it pass silently.
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+`NetArchTest` has a `HaveDependencyOn` predicate, so query handlers can be selected by their dependency on `IQueryHandler`. Writing the tests:
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+All 25 architecture tests pass on the real code: the 11 existing plus 8 layering and 6 CQRS. Fail-first next, with one injected violation per new rule:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_

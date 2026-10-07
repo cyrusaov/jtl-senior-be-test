@@ -12,10 +12,14 @@ builder.Services
         o.DisableAutoDiscovery = true;
         o.Assemblies = [typeof(UsersModule).Assembly, typeof(WorkItemsModule).Assembly];
     })
-    .SwaggerDocument(o => o.DocumentSettings = s =>
+    .SwaggerDocument(o =>
     {
-        s.Title = "JTL Users & Work Items API";
-        s.Version = "v1";
+        o.ShortSchemaNames = true; // "CreateUserResponse", not "UsersEndpointsCreateUserCreateUserResponse"
+        o.DocumentSettings = s =>
+        {
+            s.Title = "JTL Users & Work Items API";
+            s.Version = "v1";
+        };
     })
     .AddUsersModule()
     .AddWorkItemsModule();

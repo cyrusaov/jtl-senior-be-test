@@ -16,6 +16,11 @@ internal sealed class CreateWorkItemEndpoint : Endpoint<CreateWorkItemRequest, C
     {
         Post("/work-items");
         AllowAnonymous();
+        Description(b => b
+            .ClearDefaultProduces(StatusCodes.Status200OK)
+            .Produces<CreateWorkItemResponse>(StatusCodes.Status201Created)
+            .ProducesProblemDetails(StatusCodes.Status400BadRequest)
+            .ProducesProblemDetails(StatusCodes.Status422UnprocessableEntity));
         Summary(s =>
         {
             s.Summary = "Create a work item assigned to a user";

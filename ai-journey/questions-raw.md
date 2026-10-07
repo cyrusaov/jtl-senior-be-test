@@ -278,3 +278,36 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - Keep all 9 exactly — Ignore the other two selections; no diagram, limitations stay.
 
 ➡️ **My answer:** Drop limitations, add diagram (Recommended)
+
+---
+
+### 2026-10-08 01:03
+
+**Q (ai-journey): Where should ai-journey/ live after the move?**
+
+- Keep at root (Recommended) — Hooks keep writing to $CLAUDE_PROJECT_DIR/ai-journey with no change; README links become ../ai-journey/. Trade-off: the deliverable sits outside the track folder, though the root README template expects it alongside the solution anyway.
+- Move inside senior-backend-engineer/ — Everything for the track is in one folder. Trade-off: .claude/hooks/_util.mjs must change its path, and hook-generated history moves (git mv keeps it).
+
+➡️ **My answer:** Keep at root (Recommended)
+
+**Q (Claude cfg): Where should CLAUDE.md and .claude/ go?**
+
+- Keep at root (Recommended) — Claude Code loads them from the project root; only the Commands/Layout paths inside CLAUDE.md change. Trade-off: none really.
+- Move inside — Only picked up when Claude is started from senior-backend-engineer/; the hooks would then also resolve ai-journey relative to that folder. Trade-off: easy to break the logging if started from root.
+
+➡️ **My answer:** Keep at root (Recommended)
+
+**Q (Docker): Docker: CLAUDE.md lists containerization as out of scope. What do you want?**
+
+- Skip it (Recommended) — Stays within the stated scope and time box; reviewers run dotnet run. Trade-off: no one-command container run.
+- Dockerfile only — Multi-stage sdk:8.0 → aspnet:8.0, exposes 8080, plus .dockerignore and README docs. Trade-off: small scope creep; I'll log it as an override of the out-of-scope rule.
+- Dockerfile + compose — Adds docker-compose.yml on top. Trade-off: more gold-plating for a single in-memory service with no dependencies.
+
+➡️ **My answer:** Skip it (Recommended)
+
+**Q (Commits): How should the change be committed?**
+
+- Several small commits (Recommended) — 1) git mv only, 2) path fixes, 3) README move + root restore, (4) Docker if chosen. Trade-off: commit 1 alone may not build, but rename detection and git log --follow stay clean.
+- One commit — Atomic and always green. Trade-off: renames mixed with content edits can weaken rename detection and make the diff harder to review.
+
+➡️ **My answer:** Several small commits (Recommended)

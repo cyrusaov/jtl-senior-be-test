@@ -61,7 +61,7 @@ Append the approved plan to ai-journey/plan.md and log the decisions in ai-journ
 
 ### 2026-10-07 21:37 · session `8afeacf8`
 
-fix the hook and back-fill the snapshot
+Fix the hook and back-fill the snapshot
 
 ---
 

@@ -259,7 +259,7 @@ The plan-snapshot hook still isn't writing anything to `ai-journey/plans/`. Shou
 
 ## 🧑 Me
 
-fix the hook and back-fill the snapshot
+Fix the hook and back-fill the snapshot
 
 **🤖 Claude:**
 
@@ -2808,3 +2808,145 @@ _tools: Edit_
 
 
 _tools: Edit_
+
+**🤖 Claude:**
+
+Your choices are logged. #27 and #28 went as I recommended. #29 is the override: you dropped the limitations section and added the sequence diagram. I also added two entries to the "Where I overrode the AI" section: this one and the earlier #25 (keeping only one of my two recommended consistency fixes), which I hadn't recorded there yet.
+
+## Revised outline (what changed)
+- **Section 3, request flow:** gets a mermaid **sequence diagram for `POST /work-items`**, showing the one cross-module call:
+  - Client → `CreateWorkItemEndpoint` → `CreateWorkItemHandler`;
+  - name and assignee validated in the domain;
+  - `IUserDirectory.ExistsAsync` (Users.Contracts) → `UserDirectory` → Users' own store;
+  - the success branch saves to WorkItems' store and returns 201 `{ id }`; the unknown-assignee branch returns 422 problem details.
+
+  The command and query arrow chains get shorter, since the diagram shows the command path.
+- **Section 4, decisions table:** the Persistence row now says "No real unique constraint, so username uniqueness is check-then-insert and not race-safe until a SQL unique index".
+- **Section 6, "Known limitations":** removed. The other won't-fixes stay in `decisions.md` ("Independent review"), which section 8 links to.
+- **Final order:** 0 summary · 1 quick start · 2 architecture at a glance (dependency diagram) · 3 request flow (sequence diagram) · 4 key decisions & trade-offs · 5 what the tests enforce · 6 with more time · 7 AI journey.
+
+The length target is a half-page core, sections 0–4, then short bullet lists, around 100–120 lines in total. The commit will also fix the stale "(next slice)" comment.
+
+Nothing is written yet. Say "go" and I'll write it and render both mermaid diagrams to check they work. The commit will be `docs: replace template README with solution README`.
+
+---
+
+## 🧑 Me
+
+Go ahead
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+The renderer started but Puppeteer found no bundled Chromium. I'll point it at a browser already installed on this machine:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+My quoting broke the config file (shell escaping again), so the renderer fell back to its missing default. Writing the config with Node instead:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Backslashes got eaten again. Windows accepts forward slashes, so I'll use those:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Both diagrams render without parse errors. To be sure they don't just render but actually look right, I'll render them as PNG images and look at them:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+Both diagrams render correctly. The edges, labels and the nested alternative branches are all where they should be. Cleaning up the scratch files, then a final build and test before committing:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_

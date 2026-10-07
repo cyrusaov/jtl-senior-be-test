@@ -1,0 +1,41 @@
+using BuildingBlocks.Http;
+using FastEndpoints;
+using Microsoft.AspNetCore.Http;
+using Users.Application.CreateUser;
+
+namespace Users.Endpoints.CreateUser;
+
+internal sealed record CreateUserRequest(string? Username);
+
+internal sealed record CreateUserResponse(Guid Id);
+
+internal sealed class CreateUserEndpoint : Endpoint<CreateUserRequest, CreateUserResponse>
+{
+    public override void Configure()
+    {
+        Post("/users");
+        AllowAnonymous();
+        Summary(s =>
+        {
+            s.Summary = "Create a user";
+            s.Responses[StatusCodes.Status201Created] = "User created; Location points to the new user.";
+            s.Responses[StatusCodes.Status400BadRequest] = "Username is missing or invalid.";
+            s.Responses[StatusCodes.Status409Conflict] = "Username is already taken (case-insensitive).";
+        });
+    }
+
+    public override async Task HandleAsync(CreateUserRequest req, CancellationToken ct)
+    {
+        var result = await new CreateUserCommand(req.Username).ExecuteAsync(ct);
+
+        if (result.IsFailure)
+        {
+            await Send.SendErrorAsync(result.Error, ct);
+            return;
+        }
+
+        // Literal route until GET /users/{id} exists; then CreatedAtAsync<GetUserByIdEndpoint> (decision #18).
+        HttpContext.Response.Headers.Location = $"/users/{result.Value}";
+        await Send.ResponseAsync(new CreateUserResponse(result.Value), StatusCodes.Status201Created, ct);
+    }
+}

@@ -74,3 +74,27 @@ with a first passing boundary test. Then fill in the Commands section of CLAUDE.
 Run dotnet build and dotnet test. Stop and show me the project reference graph.
 Suggest a commit message.
 </pasted_content id="8051">
+
+---
+
+### 2026-10-07 22:39 · session `8afeacf8`
+
+<pasted_content id="8051">
+Implement slice "Users: CreateUser" from ai-journey/plan.md.
+
+Order: domain → application → endpoint → tests.
+- Domain: User aggregate with a private constructor and a factory method, a strongly-typed
+  UserId, and a Username value object that enforces the rules we decided in decisions.md
+  (validation, normalisation). No public setters.
+- Application: CreateUserCommand + handler. Username uniqueness lives where the plan says;
+  the command returns only the new id.
+- Persistence: the Users module's own store behind an interface owned by the module.
+- Endpoint: POST, thin — map request → command → response. Validation errors and domain
+  errors map to the error contract we agreed (problem details / status codes).
+- Tests: unit tests for Username and User invariants; one endpoint integration test
+  (happy path + duplicate/invalid username).
+
+Before writing code, list any decision this slice needs that the plan doesn't cover and ask me.
+When done: run dotnet build and dotnet test, show a short summary of files added, tell me
+what you deliberately did NOT do, and suggest a commit message.
+</pasted_content id="8051">

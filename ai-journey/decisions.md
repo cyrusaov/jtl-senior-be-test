@@ -21,6 +21,9 @@ Raw Q&A evidence: [`questions-raw.md`](./questions-raw.md).
 | 14 | 2026-10-07 | Data access for commands vs queries | (a) repositories for writes, DbContext + `AsNoTracking` projections for reads; (b) repositories for both | (a) | (a) | No | This asymmetry is the point of CQRS; reads don't hydrate aggregates. |
 | 15 | 2026-10-07 | Route for listing by assignee | (a) `GET /work-items?assigneeId=`; (b) `GET /users/{id}/work-items` | (a) | (a) | No | The WorkItems module owns its route space; filter semantics match #3 (empty list). A missing `assigneeId` → 400. |
 | 16 | 2026-10-07 | Status code for an unknown assignee on create | (a) 422 ProblemDetails; (b) 400 field error; (c) 404 | (a) | (a) | No | The request is well-formed but semantically invalid; keeps 400 for malformed input. |
+| 17 | 2026-10-07 | How uncommitted slice 0 + the hook fix land (CLAUDE.md now says commit after each green slice) | (a) 3 commits on main: hook fix, skeleton, then CreateUser; (b) fold everything into one slice-1 commit; (c) feature branch per slice | (a) | Superseded: I had already committed both together as `c8ef295` ("build: solution skeleton…") before the question was asked. From slice 1 on: one commit per green slice, on main. | In effect (outcome ≠ (a)) | Claude asked without checking `git log` first. The commit already existed, so history was left as is rather than rewritten. Logged as Correction #2. |
+| 18 | 2026-10-07 | `Location` header for `POST /users` before `GET /users/{id}` exists | (a) literal `/users/{id}` now, switch to `CreatedAtAsync<GetUserByIdEndpoint>` in slice 2; (b) omit until slice 2 | (a) | (a) | No | The contract is right from day one, and the slice-1 API test can pin it. One small follow-up edit in slice 2. |
+| 19 | 2026-10-07 | EF Core version | (a) EF Core 8.0.x; (b) EF Core 9.0.x (also runs on net8.0) | (a) | (a) | No | Matches the .NET 8 LTS stack; EF 9 adds nothing needed here. |
 
 ## Corrections
 
@@ -29,6 +32,7 @@ Places where Claude's earlier output was wrong and was fixed (by Claude or by me
 | # | What was wrong | How it was caught | Fix |
 | --- | --- | --- | --- |
 | 1 | `.claude/hooks/save-plan.mjs` read the plan from `tool_input.plan`, but in the current Claude Code version (2.1.x) ExitPlanMode takes no input and returns `{ plan, filePath }` in `tool_response`. The approved architecture plan (2026-10-07 21:36) was never snapshotted, and the failure was silent. | Claude noticed `ai-journey/plans/` was missing right after the approval. | The hook now reads `tool_input.plan`, then `tool_response.plan`, then the file at `tool_response.filePath`, and writes a warning to stderr if none is found. Tested against the real payload from the transcript (output matched the approved plan) and an empty payload (warning, exit 0). The missed snapshot was back-filled from the transcript as `plans/01_2026-10-07_2136.md`, with a header saying so. |
+| 2 | Claude asked how to commit slice 0 (decision #17) based on a `git status` snapshot from the start of the session, without re-checking. The user had already committed it as `c8ef295`. | Claude noticed when staging files for the "first" commit: `git status` no longer showed them as untracked. | History was not rewritten; #17 was updated to record the real outcome. Lesson: check `git log`/`git status` right before asking about repository state. |
 
 ## Where I overrode the AI
 

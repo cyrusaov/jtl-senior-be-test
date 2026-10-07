@@ -140,3 +140,29 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - 404 — Common in the wild, but misleading: the endpoint exists and the target resource isn't the one in the URL.
 
 ➡️ **My answer:** 422 ProblemDetails (Recommended)
+
+---
+
+### 2026-10-07 22:47
+
+**Q (Commits): CLAUDE.md now says to commit after each green slice. Slice 0 (skeleton) and the hook fix are still uncommitted. How should they land?**
+
+- 3 commits on main (Recommended) — Commit now, before slice 1 code: (1) fix(ai-journey) hook fix, (2) chore: scaffold skeleton, then (3) feat(users): create user at the end of this slice. Clean, reviewable history that mirrors the slices; directly on main, as a take-home repo usually is.
+- Fold into one slice-1 commit — Single commit at the end containing skeleton + hook + CreateUser. Fewer steps, but loses the slice-by-slice history reviewers find useful.
+- Feature branch per slice — Branch, commit, merge to main per slice. Most 'production-like', but ceremony with no reviewer for a solo take-home.
+
+➡️ **My answer:** 3 commits on main (Recommended)
+
+**Q (Location): POST /users must return a Location header, but GET /users/{id} only arrives in slice 2. How to handle it now?**
+
+- Literal /users/{id} now (Recommended) — Set Location to the agreed route string today; in slice 2 switch to FastEndpoints CreatedAtAsync<GetUserByIdEndpoint> so the link is derived from the real route. Contract is correct from day one; one tiny follow-up edit.
+- Omit until slice 2 — Return 201 + {id} without Location, add it with the GET endpoint. Never advertises a route that 404s, but the slice-1 API test can't pin the full contract.
+
+➡️ **My answer:** Literal /users/{id} now (Recommended)
+
+**Q (EF Core): EF Core version for the InMemory provider (runtime is .NET 8)?**
+
+- EF Core 8.0.x (Recommended) — Matches the .NET 8 LTS runtime and the stack; support ends with .NET 8 (Nov 2026), same as everything else here. Zero surprises.
+- EF Core 9.0.x — Also runs on net8.0, a few newer features (none needed here). Mixed-version stack is something to explain for no benefit.
+
+➡️ **My answer:** EF Core 8.0.x (Recommended)

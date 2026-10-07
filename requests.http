@@ -1,0 +1,67 @@
+# End-to-end walkthrough of the four endpoints, plus one error case each.
+# Start the service first:  dotnet run --project src/Host   (Swagger UI: http://localhost:5000/swagger)
+# Run top to bottom: ids flow between requests via named-request variables
+# (supported by the VS Code REST Client extension, Visual Studio 2022 17.12+ and JetBrains Rider).
+
+@baseUrl = http://localhost:5000
+
+### 1. Create a user -> 201 { id } + Location: /users/{id}
+# The random suffix keeps re-runs from hitting the uniqueness rule (409).
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "Alice_{{$randomInt 1000 9999}}"
+}
+
+### 1a. Error: invalid username -> 400 problem details (users.username.invalid_length)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "ab"
+}
+
+### 2. Get the user just created -> 200 { id, username }
+GET {{baseUrl}}/users/{{createUser.response.body.$.id}}
+
+### 2a. Error: unknown user id -> 404 problem details (users.not_found)
+GET {{baseUrl}}/users/{{$guid}}
+
+### 3. Create a work item for that user -> 201 { id }
+# @name createWorkItem
+POST {{baseUrl}}/work-items
+Content-Type: application/json
+
+{
+  "name": "Write the README",
+  "assigneeId": "{{createUser.response.body.$.id}}"
+}
+
+### 3b. Create a second work item (sorts first by name in the list below)
+POST {{baseUrl}}/work-items
+Content-Type: application/json
+
+{
+  "name": "Add architecture tests",
+  "assigneeId": "{{createUser.response.body.$.id}}"
+}
+
+### 3a. Error: assignee does not exist -> 422 problem details (workitems.assignee.not_found)
+POST {{baseUrl}}/work-items
+Content-Type: application/json
+
+{
+  "name": "Orphaned task",
+  "assigneeId": "{{$guid}}"
+}
+
+### 4. List the user's work items -> 200 [ ... ] ordered by name
+GET {{baseUrl}}/work-items?assigneeId={{createUser.response.body.$.id}}
+
+### 4a. Error: missing assigneeId -> 400 problem details (workitems.assignee.required)
+GET {{baseUrl}}/work-items
+
+### 4b. Not an error: unknown user -> 200 [] (decision #3)
+GET {{baseUrl}}/work-items?assigneeId={{$guid}}

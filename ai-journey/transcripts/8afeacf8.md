@@ -1596,3 +1596,283 @@ _tools: Bash_
 
 
 _tools: Bash_
+
+**🤖 Claude:**
+
+Creating a work item now works across both modules, committed as `ffecf59`. `dotnet build` is clean, and all 62 tests pass: 19 Users domain, 19 WorkItems, 8 architecture, 16 API. I kept to the plan, so there was nothing to ask about.
+
+## What was added
+| Layer | Files | Notes |
+|---|---|---|
+| Domain | `WorkItem`, `WorkItemId`, `WorkItemName`, `AssigneeId`, `WorkItemErrors`, `IWorkItemRepository` | `WorkItemName` is trimmed, required and at most 200 characters. `AssigneeId` belongs to WorkItems, not Users' `UserId`. It is a class with a private constructor, so an empty id can't be created without validation. `WorkItem.Create` only accepts already-valid value objects. |
+| Application | `CreateWorkItem/CreateWorkItemCommand`, `CreateWorkItemHandler` | Returns the new id only. Order: validate name, validate assignee id, then ask `IUserDirectory.ExistsAsync`, which is WorkItems' only link to Users. |
+| Infrastructure | `WorkItemsDbContext` (schema `work_items`), `WorkItemConfiguration`, `WorkItemRepository` | WorkItems has its own store. The assignee is stored as a plain id with no foreign key into Users, and it's indexed for the next slice's list query. |
+| Endpoint | `CreateWorkItemEndpoint` | `POST /work-items` returns 201 `{ id }`. Errors go through the same `Send.SendErrorAsync` as Users: 400 for invalid input, 422 for an unknown assignee (decision #16). |
+| Composition | `WorkItemsModule` | Same shape as `UsersModule`. Its doc comment states that it needs `IUserDirectory` from the Users module. |
+
+## The tests
+- **Domain:** name rules, including the 200/201-character boundary and blank names; assignee id rules (missing, empty, equality); the aggregate's identity and lack of public setters.
+- **Handler, with WorkItems tested on its own:**
+  - `FakeUserDirectory` stands in for the Users module, and a fake repository records what gets saved.
+  - `WorkItems.Tests` references only the WorkItems project. Its build output contains `Users.Contracts.dll` and **no `Users.dll`**.
+  - Tests check that an unknown assignee stores nothing, and that invalid input is rejected *before* Users is asked: the fake records 0 calls.
+- **API, across both modules:** create a user over HTTP, then a work item for them (201). Also: unknown assignee gives 422, missing assignee and blank name give 400 with their error codes, and a malformed GUID gives 400 problem details.
+
+## Worth knowing
+- **I caught an isolation bug before it ran.** Copying the test project with `sed` left `WorkItems.Tests` pointing at the **Users** implementation, which would have quietly undermined the "tested in isolation" claim. I noticed it in the output and rewrote the file before the first build, so nothing broken was ever built or committed. That's the third time `sed` has mishandled Windows paths this session, so I've switched to writing `.csproj` files out in full.
+- **The 400 for a malformed GUID has a different shape.** It comes from FastEndpoints' JSON binding, not from our code, so the test only checks status and content type. The field name in that error is whatever FastEndpoints chooses.
+- **Validation errors still come one at a time.** A blank name and a missing assignee report only the name error. That's the trade-off accepted in decision #13.
+
+## Commit
+```
+ffecf59 feat(work-items): create work item
+```
+
+Next is the last feature slice, `GET /work-items?assigneeId=`. It will reuse the read-store pattern from decision #20.
+
+---
+
+## 🧑 Me
+
+
+
+<pasted_content id="8051">
+Implement slice "WorkItems: GetWorkItemsByAssignee" from ai-journey/plan.md.
+
+- Query + handler returning a list of DTOs; no state change.
+- Behaviour for an unknown user id exactly as recorded in decisions.md (404 vs empty list).
+  If that requires calling Users.Contracts, do it in the handler, not the endpoint.
+- Endpoint: GET by assignee user id, thin.
+- Tests: integration test — create user, create two work items, list them; plus the
+  unknown-user case.
+
+Then review the whole WorkItems module against the Users module for consistency and list
+any differences in conventions. Run build + tests, suggest a commit message.
+</pasted_content id="8051">
+
+
+**🤖 Claude:**
+
+Checking the decision log first. Decision #3 says an unknown user gets **200 with an empty list**, deliberately without asking the Users module. Decision #15 fixes the route as `GET /work-items?assigneeId=`, with 400 if the id is missing or malformed. So the handler won't call `Users.Contracts` at all, and the read side uses the read-store pattern from #20.
+
+One thing neither the plan nor the decisions cover is the order of the returned list. A work item has no creation timestamp, and the store gives no ordering guarantee.
+
+**🤖 Claude:**
+
+
+
+_tools: AskUserQuestion_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Now the query side, following the `GetUserById` layout:
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+Next the integration tests. They cover the scenario you specified plus the 400 paths:
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Green: 66 tests. Now the consistency review. Comparing both modules side by side:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+The slice is green, so I'll commit it now. Any consistency fixes you approve will go in their own commit.
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: AskUserQuestion_
+
+**🤖 Claude:**
+
+You picked only the read-store fix. I recommended both, so I'll log the test-helper one as a partial override. Making the fix:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Green. Committing the fix on its own:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+All four endpoints from the brief are now built. The list endpoint is committed as `c6c5aa2`, and the consistency fix you picked as `7953670`. `dotnet build` is clean, and all 66 tests pass: 19 Users, 19 WorkItems, 8 architecture, 20 API.
+
+## The list endpoint
+- **Unknown user:** returns 200 with an empty list, as decision #3 says. The handler never calls `Users.Contracts`, so reading work items stays entirely within WorkItems' own data.
+- **Request:** `GET /work-items?assigneeId=`. A missing id returns 400 with `workitems.assignee.required`, checked by the same `AssigneeId` value object the create command uses. A malformed id is a 400 from request binding.
+- **Read side:** a read-store interface (`IWorkItemReadStore`) returns DTOs from a read-only query, never the aggregate.
+- **Ordering:** by name, then id. That wasn't covered by the plan, so I asked; it's decision #24.
+- **Tests:**
+  - One user with two work items, created in reverse name order: both come back, correctly ordered.
+  - Another user's item is left out of that list.
+  - An unknown user gets an empty list.
+  - A missing or malformed id gets a 400.
+
+## Consistency review: WorkItems vs Users
+Both modules have the same folders (`Application/<UseCase>`, `Endpoints/<UseCase>`, `Domain`, `Infrastructure`). The handler, store and error-catalog naming matches, all types are `internal` except `XModule`, and errors go through the same `Send.SendErrorAsync` path.
+
+| # | Difference | Verdict |
+|---|---|---|
+| 1 | Read-store parameters: `IUserReadStore` took a raw `Guid`, `IWorkItemReadStore` takes the `AssigneeId` value object | **Fixed** (`7953670`): both take domain types now. The rule: messages carry plain values, store interfaces take domain types |
+| 2 | API test helpers: Users has a shared `UsersApi`; the WorkItems tests use private helpers and duplicate response records | **Left as is** at your call (decision #25: you declined one of my two recommendations) |
+| 3 | `Username` is a class with hand-written case-insensitive equality; `WorkItemName` and `AssigneeId` are records | Intentional: only usernames need case-insensitive equality |
+| 4 | `UserId`/`WorkItemId` are structs; `AssigneeId` is a class with a validating factory | Intentional: the ids are generated internally, while the assignee id is outside input that must be validated |
+| 5 | Usernames are stored as two columns (as entered + normalized); work item names as one | Intentional: only uniqueness needs the second, normalized column |
+| 6 | Creating a user returns a `Location` header; creating a work item doesn't | Intentional: there's no `GET /work-items/{id}` to point to |
+| 7 | WorkItems has handler unit tests with fakes; Users relies on API tests | Intentional: you asked for WorkItems to show module isolation |
+| 8 | Get-by-id takes a non-nullable `Guid`; the list query takes `Guid?` and validates it | Intentional: a route segment is always present, a query parameter can be missing |
+
+## Commits
+```
+c6c5aa2 feat(work-items): list work items by assignee
+7953670 refactor(users): read-store port takes UserId, not a raw Guid
+```
+Both include their ai-journey updates (decisions #24 and #25).
+
+**Still to do in the plan:**
+- **Slice 6, the rest of the architecture rules:** layer direction, the command/query split, and "query handlers don't use repositories". These are the only guard that the read side never changes state.
+- **Slice 7, docs:** the README, a `.http` file for the four endpoints, and curating `ai-journey/`.

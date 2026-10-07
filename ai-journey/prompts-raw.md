@@ -174,3 +174,16 @@ Implement slice "WorkItems: GetWorkItemsByAssignee" from ai-journey/plan.md.
 Then review the whole WorkItems module against the Users module for consistency and list
 any differences in conventions. Run build + tests, suggest a commit message.
 </pasted_content id="8051">
+
+---
+
+### 2026-10-07 23:26 · session `8afeacf8`
+
+<pasted_content id="8051">
+Add a .http file at the repo root that exercises all four endpoints end-to-end
+(create user → get user → create work item → list work items, plus one error case each),
+using variables so the ids flow between requests. Confirm Swagger is reachable and note the
+URL. Fill in the Commands section of CLAUDE.md if anything changed.
+Run the service and every request in the .http file (or equivalent curl) and report the
+actual responses. Run build + tests, suggest a commit message.
+</pasted_content id="8051">

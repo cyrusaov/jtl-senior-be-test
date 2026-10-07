@@ -59,9 +59,11 @@ Warnings are errors. Package versions live only in `Directory.Packages.props` (c
 - Build: `dotnet build`
 - Test (all): `dotnet test`
 - Test (architecture only): `dotnet test tests/Architecture.Tests`
-- Run: `dotnet run --project src/Host` → Swagger UI at `/swagger`
-  (the host refuses to start until at least one endpoint exists: FastEndpoints throws on zero endpoints)
+- Run: `dotnet run --project src/Host` → listens on `http://localhost:5000` (Kestrel default; no launchSettings)
+  - Swagger UI: `http://localhost:5000/swagger` · OpenAPI JSON: `http://localhost:5000/swagger/v1/swagger.json`
+- Exercise the API: `requests.http` at the repo root (all 4 endpoints + one error case each; run top to bottom,
+  ids flow via named requests). Data is in-memory and resets on every restart.
 
 Layout: `src/Host` (composition root), `src/BuildingBlocks` (Result/Error, CQRS markers, error→problem-details),
 `src/Modules/<Module>/<Module>` (internal layers as folders) + `src/Modules/<Module>/<Module>.Contracts` (public surface),
-`tests/Architecture.Tests`. Register a new module in `src/Host/Program.cs` (`o.Assemblies`) and in `tests/Architecture.Tests/Modules.cs`.
+`tests/{Architecture,Users,WorkItems,Api}.Tests`. Register a new module in `src/Host/Program.cs` (`o.Assemblies`) and in `tests/Architecture.Tests/Modules.cs`.

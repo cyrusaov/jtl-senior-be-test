@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The only project other modules may reference. Public surface, no dependencies. -->
+
+</Project>

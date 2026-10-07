@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkItems.Contracts\WorkItems.Contracts.csproj" />
+    <!-- Cross-module dependency: Users' public contract only, never its implementation. -->
+    <ProjectReference Include="..\..\Users\Users.Contracts\Users.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
+  </ItemGroup>
+
+</Project>

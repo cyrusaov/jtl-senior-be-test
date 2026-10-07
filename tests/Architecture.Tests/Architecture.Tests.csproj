@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Every module project, so the rules can inspect the compiled assemblies. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Users\Users\Users.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Users\Users.Contracts\Users.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\WorkItems\WorkItems\WorkItems.csproj" />
+    <ProjectReference Include="..\..\src\Modules\WorkItems\WorkItems.Contracts\WorkItems.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

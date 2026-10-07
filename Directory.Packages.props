@@ -1,0 +1,13 @@
+<Project>
+  <ItemGroup>
+    <!-- API + CQRS -->
+    <PackageVersion Include="FastEndpoints" Version="8.3.0" />
+    <PackageVersion Include="FastEndpoints.Swagger" Version="8.3.0" />
+
+    <!-- Tests -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+</Project>

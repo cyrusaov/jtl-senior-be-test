@@ -215,3 +215,14 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - Unspecified order — Least code; document that order is undefined. Cost: flaky-looking API and tests must compare as sets.
 
 ➡️ **My answer:** By name, then id (Recommended)
+
+---
+
+### 2026-10-07 23:25
+
+**Q (Fixes): The review found two genuine convention drifts between Users and WorkItems. Which should I fix now (separate refactor commit)?**
+
+- Read-store port param types — IUserReadStore.GetByIdAsync takes a raw Guid, IWorkItemReadStore.ListByAssigneeAsync takes the AssigneeId value object. Recommended: align on domain id types (GetByIdAsync(UserId)), so ports never accept unvalidated primitives. ~3 lines.
+- API test helpers — Users tests share a UsersApi helper; WorkItems tests each have private helpers and duplicate response records (one even reads the create response into the list DTO). Recommended: add WorkItemsApi.CreateWorkItemAsync mirroring UsersApi.
+
+➡️ **My answer:** Read-store port param types

@@ -1,3 +1,5 @@
+using Users.Domain;
+
 namespace Users.Application.GetUserById;
 
 /// <summary>
@@ -6,5 +8,5 @@ namespace Users.Application.GetUserById;
 /// </summary>
 internal interface IUserReadStore
 {
-    Task<UserDto?> GetByIdAsync(Guid id, CancellationToken ct);
+    Task<UserDto?> GetByIdAsync(UserId id, CancellationToken ct);
 }

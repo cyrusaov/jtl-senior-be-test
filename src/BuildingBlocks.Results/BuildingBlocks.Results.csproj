@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared kernel for the domain: Result<T> and Error only.
+    No package or project references, so domain code that uses it stays free of any framework.
+  -->
+
+</Project>

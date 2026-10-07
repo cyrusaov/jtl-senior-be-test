@@ -226,3 +226,16 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - API test helpers — Users tests share a UsersApi helper; WorkItems tests each have private helpers and duplicate response records (one even reads the create response into the list DTO). Recommended: add WorkItemsApi.CreateWorkItemAsync mirroring UsersApi.
 
 ➡️ **My answer:** Read-store port param types
+
+---
+
+### 2026-10-07 23:43
+
+**Q (Fix list): Which reviewer findings should be fixed? (Everything not selected is logged as won't-fix with the reasons in my table; use 'Other' to flip any won't-fix, e.g. 'also FE-1'.)**
+
+- README + stale comment — CL-1/CL-2/CL-3: write the solution README (decisions, flow, trade-offs, 'with more time', links to decisions.md) and fix the stale comment. Recommended: the main score drag.
+- Layering + CQRS arch tests — CQRS-1/MT-4: plan slice 6 — layer direction, no EF/FastEndpoints in Domain, no EF in Application, query handlers never use repositories, Command/Query marker rules. Recommended: makes the Messages.cs claim true.
+- Framework-free Results — DDD-2: move Result/Error into BuildingBlocks.Results (no deps), arch test that Domain depends on nothing framework-y. Recommended: ~15 min, removes a real DDD smell.
+- Swagger response types — FE-2: declare success + problem-details response types per endpoint so Swagger shows error schemas. Recommended: ~4 lines.
+
+➡️ **My answer:** README + stale comment, Layering + CQRS arch tests, Framework-free Results, Swagger response types

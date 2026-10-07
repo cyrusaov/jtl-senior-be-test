@@ -1876,3 +1876,383 @@ Both include their ai-journey updates (decisions #24 and #25).
 **Still to do in the plan:**
 - **Slice 6, the rest of the architecture rules:** layer direction, the command/query split, and "query handlers don't use repositories". These are the only guard that the read side never changes state.
 - **Slice 7, docs:** the README, a `.http` file for the four endpoints, and curating `ai-journey/`.
+
+---
+
+## 🧑 Me
+
+
+
+<pasted_content id="8051">
+Add a .http file at the repo root that exercises all four endpoints end-to-end
+(create user → get user → create work item → list work items, plus one error case each),
+using variables so the ids flow between requests. Confirm Swagger is reachable and note the
+URL. Fill in the Commands section of CLAUDE.md if anything changed.
+Run the service and every request in the .http file (or equivalent curl) and report the
+actual responses. Run build + tests, suggest a commit message.
+</pasted_content id="8051">
+
+
+**🤖 Claude:**
+
+Plan §1 put this file at `http/requests.http`, but you asked for the repo root, so it goes there as `requests.http`. First, a check of how the Host starts, since that sets the base URL:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+The build is clean and all 66 tests pass. Committing the `.http` file and the CLAUDE.md update:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+I added `requests.http` at the repo root and ran every request in it against the live service. All 10 came back as expected, and the ids carried through from one request to the next. `dotnet build` is clean and all 66 tests pass. It's committed as `0985e1e`.
+
+**Location:** the plan said `http/requests.http`; you asked for the repo root, so it's at the root.
+
+## Swagger
+- UI: **http://localhost:5000/swagger** (200)
+- OpenAPI JSON: **http://localhost:5000/swagger/v1/swagger.json**. Its title is "JTL Users & Work Items API v1", and it lists `POST /users`, `GET /users/{id}`, `POST /work-items` and `GET /work-items`.
+- Port 5000 is Kestrel's default; there's no launch-settings file. The service runs in Production mode, and Swagger is enabled regardless.
+
+## Responses from the run
+| # | Request | Result |
+|---|---|---|
+| 1 | `POST /users` `{ "username": "Alice_5463" }` | **201** `{ id }`, `Location: /users/485283ec-…` |
+| 1a | `POST /users` `"ab"` | **400** problem details, `users.username.invalid_length` |
+| 2 | `GET /users/{id from 1}` | **200** `{ id, "username": "Alice_5463" }` |
+| 2a | `GET /users/{random guid}` | **404** problem details, `users.not_found` |
+| 3 / 3b | `POST /work-items` "Write the README", then "Add architecture tests" | **201** `{ id }` each |
+| 3a | `POST /work-items` with a random assignee | **422** problem details, `workitems.assignee.not_found` |
+| 4 | `GET /work-items?assigneeId={id from 1}` | **200**, both items, "Add architecture tests" first (ordered by name) |
+| 4a | `GET /work-items` with no `assigneeId` | **400** problem details, `workitems.assignee.required` |
+| 4b | `GET /work-items?assigneeId={random guid}` | **200** `[]`, as decision #3 says |
+
+Every error body has the same shape: `type`, `title`, `status`, `instance`, `traceId`, `detail`, and `errors[]` with `name`, `reason` and `code`.
+
+## How the file works
+- **Ids flow automatically.** The create-user request is named (`# @name createUser`) and later requests use `{{createUser.response.body.$.id}}`. VS Code REST Client, Visual Studio 2022 17.12+ and Rider support this.
+- **Re-runs work without restarting.** The username gets a random suffix (`{{$randomInt}}`), so running the file again doesn't hit the duplicate-username 409.
+
+To run it myself, I wrote a small throwaway script that reads `requests.http` and fills in those variables. That way the file's own syntax got tested, not a hand-copied curl version.
+
+I got that script wrong twice before the run that counts:
+1. It filled in the request body twice, once to send and once to print, so the log showed a different random username from the one sent.
+2. My first fix half-applied and sent `{{$randomInt …}}` unfilled, which the API correctly rejected with a 400.
+
+Both were bugs in my script, not in the service. The table above is from the corrected run.
+
+## CLAUDE.md "Commands"
+- The run line now gives the actual URL, `http://localhost:5000`, plus both Swagger URLs.
+- It points to `requests.http` and notes that the in-memory data resets on every restart.
+- The outdated note about the Host not starting with zero endpoints is gone.
+- The layout line now lists all four test projects.
+
+## Commit
+```
+0985e1e docs: add requests.http walkthrough of all four endpoints
+```
+
+The rest of the plan is slice 6: architecture rules for layer direction, the command/query split, and "query handlers don't use repositories". After that come the README and a tidy-up of `ai-journey/`.
+
+---
+
+## 🧑 Me
+
+
+
+<pasted_content id="8051">
+Spawn a subagent that has NOT seen this conversation. Give it only: the repo path,
+senior-backend-engineer/instructions.md, and this brief:
+
+"You are a senior reviewer on a hiring panel. Score this repo 1–5 on each criterion in
+'What we evaluate' (module boundaries, DDD, CQRS, FastEndpoints usage, maintainability/
+testability, clarity). For each point below 5, cite file:line and the concrete problem.
+Look specifically for: references between modules other than via Contracts, anemic entities,
+public setters, logic in endpoints, queries that mutate or commands that return read models,
+leaky persistence types. Do not modify any files."
+
+Return its report to me verbatim. Then, for each finding, give me your recommendation:
+fix / won't fix (with reason). I decide. Log the outcome in ai-journey/decisions.md.
+</pasted_content id="8051">
+
+
+**🤖 Claude:**
+
+Spawning a fresh reviewer. It gets only the repo path, the instructions file and your brief, word for word. One caveat: `ai-journey/transcripts/` is inside the repo and holds this conversation. The brief doesn't tell the reviewer to skip it, so it could read it. I'll report whether it did.
+
+**🤖 Claude:**
+
+
+
+_tools: Agent_
+
+**🤖 Claude:**
+
+The reviewer is running in the background. I'll paste its report here word for word when it finishes, followed by my fix / won't-fix recommendation on each finding for you to decide.
+
+**🤖 Claude:**
+
+## Reviewer's report (verbatim)
+
+---
+
+## Hiring-panel review of JTL-BE (read-only; no files were changed)
+
+I read every tracked .cs and .csproj file under `src/` and `tests/`, plus `Directory.Build.props`, the root `README.md`, and the evaluation criteria in `senior-backend-engineer/instructions.md`. I did not run the build or the tests.
+
+### Scores
+
+| Criterion | Score |
+|---|---|
+| Module boundaries | 5 |
+| DDD | 4 |
+| CQRS | 4 |
+| FastEndpoints usage | 4 |
+| Maintainability / testability | 4 |
+| Clarity | 2 (blocker) |
+
+### What I looked for, and what I found
+
+- **Module references outside Contracts:** none. `WorkItems.csproj:11` references only `Users.Contracts`. Only `Host.csproj:10-11` references the module implementations.
+- **Public setters:** none. Both aggregates use `private set`, and tests check this (`UserTests.cs:27`, `WorkItemTests.cs:25`).
+- **Logic in endpoints:** none. Each endpoint maps the request, sends it, and maps the result.
+- **Commands returning read models:** none. Both commands return `Result<Guid>`.
+- **Queries that change state:** none. Both read stores use `AsNoTracking` and project to DTOs.
+- **Persistence types leaking out:** no EF types appear outside Infrastructure. Two small EF accommodations do sit in the domain (DDD-2 below).
+
+### 1. Module boundaries: 5
+
+- Every type in a module is `internal` except its entry point, and `ModuleBoundaryTests.cs:56-64` checks that.
+- Contracts may depend only on the base class library (`ModuleBoundaryTests.cs:41-52`). `IUserDirectory` uses a plain `Guid`.
+- Each module has its own DbContext and its own `InMemoryDatabaseRoot`. `WorkItemConfiguration.cs:25` stores the assignee as a plain id, with no foreign key.
+- Small notes that don't lower the score:
+  - `WorkItemsModule.cs:13` needs `IUserDirectory` to be registered, but this is only stated in a doc comment. If the host forgets to add the Users module, it fails at runtime, not at startup.
+  - `WorkItems.Contracts` is an empty project.
+
+### 2. DDD: 4
+
+- **DDD-1, presentation details in the domain.** The error types carry HTTP and JSON concerns:
+  - `UserErrors.cs:11` contains `UsernameField = "username"`.
+  - `WorkItemErrors.cs:11-12` contains `"name"` and `"assigneeId"`.
+  - `Error.cs:7`: `ErrorKind` is a 1:1 stand-in for HTTP status codes (Validation→400, NotFound→404, Conflict→409, Unprocessable→422).
+  - Renaming a request property therefore means editing the domain.
+- **DDD-2, the domain depends on BuildingBlocks, which depends on FastEndpoints.** `Username.cs:2` and `WorkItemName.cs:1` use `BuildingBlocks.Results`. `BuildingBlocks.csproj:4` pulls in FastEndpoints and ASP.NET.
+  - So the domain's shared kernel brings in the web framework. `Results` should live in a framework-free project, separate from `Cqrs/` and `Http/`.
+  - The EF-only private constructors with `null!` (`User.cs:6-10`, `WorkItem.cs:6-11`) and the `private set` on `Username.Value` / `NormalizedValue` (`Username.cs:22,24`, needed for an EF owned type) are acceptable, minor concessions to EF.
+- **DDD-3, inconsistent value-object style.**
+  - `Username` is a hand-written `sealed partial class` with custom equality (`Username.cs:11`).
+  - `WorkItemName` and `AssigneeId` are `sealed record` classes.
+  - `UserId` and `WorkItemId` are `record struct`s with public constructors (`UserId.cs:4`, `WorkItemId.cs:4`), so `default` / `Guid.Empty` ids can be built with no invariant. `AssigneeId.cs:8` explains why it differs, but the ids don't apply the same rule to themselves.
+- **Anemic entities: not a real concern.** `User` and `WorkItem` only have `Create`, but no use case needs behaviour, and invariants live in the value objects. Placing the uniqueness check in the handler (`CreateUserHandler.cs:15-18`) is sound and documented.
+
+### 3. CQRS: 4
+
+- The `ICommand` / `IQuery` markers sit over the FastEndpoints bus (`Messages.cs`). Separate repository (write) and read-store (read) ports are registered side by side (`UsersModule.cs:21-22`).
+- **CQRS-1, the claimed CQRS enforcement does not exist.** `Messages.cs:3-4` says the markers "let architecture tests enforce it". No test does:
+  - nothing checks that query handlers never depend on `I*Repository` or `SaveChanges`;
+  - nothing checks that commands return only an id;
+  - nothing checks that Application has no EF Core dependency, although `IUserReadStore.cs:7` and `IWorkItemReadStore.cs:7` both claim it.
+  - Layering inside a module (Domain must not reference Infrastructure, Endpoints or EF) is also unenforced. `Modules.cs:9` lists the layers but only uses them for cross-module checks.
+- **CQRS-2, the cross-module read goes around the module's own query side.** `UserDirectory.cs:8-14` queries `UsersDbContext` directly, not through an `IQuery` or `IUserReadStore`. It works, but it is a third read path with no rule governing it.
+- **CQRS-3, the list query sorts in memory and has no paging.** `WorkItemReadStore.cs:12-24` loads every row for the assignee, then sorts and maps in memory. The comment admits it. There is no paging or limit, so the list is unbounded.
+
+### 4. FastEndpoints usage: 4
+
+- Endpoints are thin. They use `CreatedAtAsync<GetUserByIdEndpoint>` (`CreateUserEndpoint.cs:39`), explicit assembly scanning (`Program.cs:12-13`) and problem details with error codes (`Program.cs:25`).
+- **FE-1, the same failure-handling block is pasted into all four endpoints:**
+  - `CreateUserEndpoint.cs:32-36`
+  - `GetUserByIdEndpoint.cs:32-36`
+  - `CreateWorkItemEndpoint.cs:32-36`
+  - `GetWorkItemsByAssigneeEndpoint.cs:33-37`
+
+  A shared base endpoint or result-sending extension would remove it.
+- **FE-2, only part of Swagger is documented.** `Summary()` gives text for each response but declares no response types (no `Produces`/`ProducesProblemDetails`), so error schemas are missing from Swagger.
+- **FE-3, FastEndpoints' validation pipeline is skipped on purpose.** All input checks happen in the domain. That's defensible, but all four request records allow nulls (`string?`, `Guid?`) only so values reach the domain. It is explained at `CreateWorkItemEndpoint.cs:8` and `GetWorkItemsByAssigneeEndpoint.cs:8`, but any reviewer will ask about it.
+
+### 5. Maintainability / testability: 4
+
+- Strengths:
+  - test layers are well separated: domain unit tests, handler tests with fakes of another module's contract (`Fakes.cs:7`), black-box API tests, and architecture tests;
+  - `TreatWarningsAsErrors` and nullable checks are on (`Directory.Build.props:4,6`);
+  - per-host in-memory stores keep tests isolated.
+- **MT-1, Users has no handler tests.** `CreateUserHandler`, including its uniqueness branch, is tested only through HTTP (`CreateUserEndpointTests.cs:24`). WorkItems has such tests, so the two modules are uneven.
+- **MT-2, uniqueness isn't race-safe.** Check-then-insert (`CreateUserHandler.cs:17-21`) with the in-memory provider, which ignores the unique index (`UserConfiguration.cs:30-31`). This is acknowledged in comments, and fine for the time box.
+- **MT-3, reading a row back can throw.** The EF conversions call `.Value` on a `Result` (`WorkItemConfiguration.cs:20,27`), which throws on bad stored data. Acceptable, but undocumented beyond a comment.
+- **MT-4, the CQRS and layering checks are missing** (same gap as CQRS-1), so a newcomer could break those conventions with every test still green.
+
+### 6. Clarity: 2 (most important finding)
+
+- **CL-1, blocker: there is no solution README.** The root `README.md:1-84` is still the unchanged template ("This repository holds the take-home tasks…"). The task requires "a short README explaining your key decisions and trade-offs". Today, design reasoning only appears as comments pointing to "decision #N" and "plan §N" (for example `IUserDirectory.cs:4`, `CreateUserHandler.cs:15`, `WorkItemRepository.cs:7`), which only make sense next to `ai-journey/decisions.md`. A reviewer opening the repo sees the template text first.
+- **CL-2: references in code comments point outside the code.** "decision #23" and "plan §5" depend on `ai-journey/`; the README should link or summarise them.
+- **CL-3: one stale comment.** `WorkItemConfiguration.cs:31` says "Supports the 'list by assignee' query (next slice)", but that slice is already done.
+- Otherwise naming is good: there is one folder per use case, and the endpoint, command and handler names line up.
+
+### Fixes, in order of impact
+
+1. Write the solution README. It moves Clarity from 2 to 4 or 5.
+2. Add architecture tests for layers inside a module and for the CQRS markers, or remove the claim at `Messages.cs:3-4`.
+3. Move `Results` into a BuildingBlocks project with no framework dependency, and take field names and HTTP-shaped error kinds out of the domain.
+4. Fold the repeated failure-handling block into one helper.
+5. Make the id types consistent and fix the stale comment.
+
+---
+
+The reviewer says it read only `src/`, `tests/`, `Directory.Build.props`, `README.md` and the instructions, so it says it didn't open `ai-journey/` (neither the transcripts nor `decisions.md`). That matches what it cites: nothing from those files. I've spot-checked the findings I could confirm from memory: the stale comment, the `Messages.cs` claim, the missing README and the `BuildingBlocks` → FastEndpoints dependency are all real.
+
+## My recommendation per finding
+
+| ID | Finding | Recommendation | Reason |
+|---|---|---|---|
+| CL-1 / CL-2 | No solution README; comments cite "decision #N" | **Fix** | It's a required deliverable and the biggest score drag (Clarity 2). It's already planned for slice 7; the README will link to `decisions.md`. |
+| CL-3 | Stale "(next slice)" comment | **Fix** | One-line change, plainly wrong now. |
+| CQRS-1 / MT-4 | The CQRS/layering enforcement `Messages.cs` claims doesn't exist | **Fix** | A comment that claims something false is worse than no comment. This is plan slice 6: layer direction, no EF in Domain/Application, query handlers not using repositories, the marker rules. |
+| DDD-2 | Domain → BuildingBlocks → FastEndpoints | **Fix** | Move `Result`/`Error` into a framework-free `BuildingBlocks.Results` project and add an architecture test that Domain has no framework dependency. About 15 minutes, and it removes a real DDD smell. |
+| FE-2 | Swagger declares no response/error types | **Fix** | About one line per endpoint (`Produces` + problem-details response types); the README sends people to Swagger. |
+| DDD-1 | Field names and `ErrorKind` in the domain | **Won't fix** | `ErrorKind` names business categories; mapping them to HTTP lives in `BuildingBlocks.Http`. The field names say *which input* is wrong, which is domain knowledge. Pulling them out means a mapping table per endpoint. I'll document it in the README. |
+| DDD-3 | Value objects in mixed styles; ids allow `default` | **Won't fix** | Each style matches its job: `Username` needs case-insensitive equality, the ids are always generated internally, and `AssigneeId` is outside input. The README will say so. |
+| CQRS-2 | `UserDirectory` reads the DbContext directly | **Won't fix** | It's the Infrastructure adapter for the public contract, a legitimate read path. The new layering tests will cover its placement. |
+| CQRS-3 | Sorts in memory, no paging | **Won't fix** | Paging is out of scope (plan §9). Sorting in memory is a quirk of the in-memory provider; I'll note in the README that SQL would push it into the query. |
+| FE-1 | Failure branch repeated in 4 endpoints | **Won't fix** | Five explicit lines per endpoint keep each one readable on its own. A shared base class or wrapper would add indirection for little saving. Easy to revisit at endpoint #10. |
+| FE-3 | Nullable request records | **Won't fix** | This is decision #13: validation lives only in value objects. The README will explain it. |
+| MT-1 | No Users handler tests | **Won't fix** | The API tests already cover the uniqueness branch end to end. WorkItems got handler tests specifically to show module isolation. |
+| MT-2 | Uniqueness isn't race-safe | **Won't fix** | Known, documented limitation of the in-memory store; SQL's unique index closes it. Goes in the README under "with more time". |
+| MT-3 | EF conversions throw on bad stored data | **Won't fix** | Corrupt stored data is an exceptional case, so throwing is correct. |
+| Boundaries note | `IUserDirectory` dependency is only checked at runtime | **Won't fix** | Startup DI validation wouldn't catch it either, because FastEndpoints builds handlers when they run. The API tests fail immediately if the Users module isn't registered. |
+| Boundaries note | Empty `WorkItems.Contracts` | **Won't fix** | Kept on purpose so both modules have the same shape (plan §1). |
+
+**🤖 Claude:**
+
+
+
+_tools: AskUserQuestion_
+
+**🤖 Claude:**
+
+You took all four fixes I recommended and left every won't-fix in place, so nothing was overridden. Logging the outcome:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+One more entry. The false claim in `Messages.cs` and the stale comment were my own earlier output, and the working agreement says those go under Corrections:
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+The review's verdict, logged in `ai-journey/decisions.md`: **Clarity 2/5, everything else 4–5.** The low Clarity score is because the root `README.md` is still the template. You chose to fix the four findings I recommended fixing and to leave the other twelve as deliberate won't-fixes, so nothing was overridden. None of the fixes are implemented yet.
+
+**Reviewer's scores:** module boundaries 5, DDD 4, CQRS 4, FastEndpoints 4, maintainability/testability 4, clarity 2. It found no references between modules except via Contracts, no public setters, no logic in endpoints, no state-changing queries, no commands returning read models, and no EF types outside Infrastructure.
+
+**To fix:**
+- **README:** the solution README plus the stale "(next slice)" comment. This is planned slice 7.
+- **Architecture tests:** layer direction, no EF or FastEndpoints in Domain, no EF in Application, query handlers never using repositories, and the command/query marker rules. This is planned slice 6, and it makes the `Messages.cs` claim true.
+- **Framework-free results:** move `Result`/`Error` into a `BuildingBlocks.Results` project with no dependencies, so the domain no longer pulls in FastEndpoints. A test will enforce that.
+- **Swagger:** declare success and error response types on each endpoint, so Swagger shows the problem-details schemas.
+
+**Two of the findings were my own mistakes**, logged as Correction #4. The `Messages.cs` comment has claimed since slice 0 that architecture tests enforce the command/query split, and they never did. My slice summaries kept listing slice 6 as pending without noticing the comment was false in the meantime. The "(next slice)" comment also outlived its slice.
+
+**What's in `decisions.md` now:**
+- Decision #26, recording the triage.
+- An "Independent review" section with the scores and one row per finding (my recommendation and your final call).
+- Correction #4.
+
+**About the reviewer's independence:** it says it read only `src/`, `tests/`, `Directory.Build.props`, `README.md` and the instructions, so not `ai-journey/`, where the transcripts are. Nothing it cites comes from there, so as far as I can tell it judged the code without this conversation's context.
+
+Next, I'd do the fixes in this order:
+1. Framework-free results, because the new architecture tests will check against it.
+2. The architecture tests.
+3. Swagger response types.
+4. The README last, so it describes the final state.
+
+Each step ends green with its own commit. Should I start?

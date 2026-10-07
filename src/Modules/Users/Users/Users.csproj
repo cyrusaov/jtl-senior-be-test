@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Users.Contracts\Users.Contracts.csproj" />
+    <!-- Domain uses only BuildingBlocks.Results; Application/Endpoints use BuildingBlocks (CQRS, HTTP). -->
+    <ProjectReference Include="..\..\..\BuildingBlocks.Results\BuildingBlocks.Results.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
   </ItemGroup>
 

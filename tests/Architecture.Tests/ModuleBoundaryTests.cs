@@ -44,11 +44,7 @@ public sealed class ModuleBoundaryTests
         // so a consumer of a contract can never be coupled to anything but the contract itself.
         var contracts = Modules.Get(moduleName).Contracts;
 
-        var offending = contracts.GetReferencedAssemblies()
-            .Select(a => a.Name!)
-            .Where(name => !IsBaseClassLibrary(name));
-
-        Assert.Empty(offending);
+        Assert.Empty(contracts.NonBaseClassLibraryReferences());
     }
 
     [Theory]
@@ -63,9 +59,5 @@ public sealed class ModuleBoundaryTests
         Assert.Equal([$"{moduleName}.{moduleName}Module"], publicTypes);
     }
 
-    private static bool IsBaseClassLibrary(string assemblyName) =>
-        assemblyName is "netstandard" or "mscorlib" || assemblyName.StartsWith("System", StringComparison.Ordinal);
-
-    private static string Describe(TestResult result, string rule) =>
-        $"{rule}. Offending types: {string.Join(", ", result.FailingTypeNames ?? [])}";
+    private static string Describe(TestResult result, string rule) => result.Describe(rule);
 }

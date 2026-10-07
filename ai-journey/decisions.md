@@ -30,6 +30,32 @@ Raw Q&A evidence: [`questions-raw.md`](./questions-raw.md).
 | 23 | 2026-10-07 | Shape of `Users.Contracts` (refines #11) | (a) `IUserDirectory.ExistsAsync(Guid userId, ct)` returning `bool`, no DTO; (b) `FindAsync(Guid)` returning a `UserSummary(Id, Username)` DTO or null | (a) | (a) | No | Exactly what WorkItems needs (assignee validation) and nothing more. A primitive `Guid` keeps Users' internal `UserId` from crossing the boundary. The contract has no dependencies, so consumers can't couple to Users' domain, and it's trivial to fake in WorkItems tests. If the username is ever needed, growing the contract is a deliberate, visible change. |
 | 24 | 2026-10-07 | Order of `GET /work-items?assigneeId=` results (WorkItem has no timestamp) | (a) by name, then id; (b) add `CreatedAt`, newest first; (c) unspecified order | (a) | (a) | No | Deterministic and easy to test, with no domain change. (b) needs a new field plus a `TimeProvider` abstraction, beyond the time box; noted for the README's "with more time". |
 | 25 | 2026-10-07 | Convention drift found in the Users ↔ WorkItems review | (1) read-store ports: `IUserReadStore` took a raw `Guid`, `IWorkItemReadStore` a domain `AssigneeId` → align on domain types; (2) API test helpers: Users has a shared `UsersApi`, WorkItems tests use private helpers and duplicated records → add `WorkItemsApi` | Fix both | Fix (1) only | Partly: I declined (2) | (1) sets the rule "messages carry primitives; ports take domain types". (2) left as is: test-only code, low value within the time box. |
+| 26 | 2026-10-07 | Triage of the independent review (see [Independent review](#independent-review-2026-10-07)) | Per finding: fix / won't fix | Fix CL-1/2/3, CQRS-1/MT-4, DDD-2, FE-2; won't fix the rest | Same as proposed | No | Fixes target the false claim in `Messages.cs`, the missing README (Clarity 2/5), and the framework dependency leaking into the domain. Won't-fixes are deliberate trade-offs to be explained in the README. |
+
+## Independent review (2026-10-07)
+
+A fresh Claude subagent with no conversation context got only the repo path, `senior-backend-engineer/instructions.md` and a hiring-panel brief. It reports reading `src/`, `tests/`, `Directory.Build.props`, `README.md` and the instructions; not `ai-journey/`.
+Scores (1–5): Module boundaries **5**, DDD **4**, CQRS **4**, FastEndpoints **4**, Maintainability/testability **4**, Clarity **2**.
+The full report is in the session transcript. Outcome per finding (decision #26):
+
+| ID | Finding | AI recommended | Final |
+| --- | --- | --- | --- |
+| CL-1/CL-2 | No solution README; code comments cite "decision #N"/"plan §N" that only `ai-journey/` explains | Fix (slice 7) | Fix |
+| CL-3 | Stale "(next slice)" comment in `WorkItemConfiguration` | Fix | Fix |
+| CQRS-1/MT-4 | `Messages.cs` claims architecture tests enforce the CQRS split, but none do; layering inside a module is unenforced | Fix (plan slice 6) | Fix |
+| DDD-2 | Domain → `BuildingBlocks` → FastEndpoints/ASP.NET: the shared kernel drags the web framework into the domain | Fix: framework-free `BuildingBlocks.Results` + architecture test | Fix |
+| FE-2 | Swagger shows response text but no response/problem-details types | Fix | Fix |
+| DDD-1 | Field names and `ErrorKind` live in the domain | Won't fix: `ErrorKind` is a business category, the HTTP mapping lives in `BuildingBlocks.Http`; field names identify which input is wrong. Document in README | Won't fix |
+| DDD-3 | Mixed value-object styles; id structs allow `default` | Won't fix: each style fits its job (case-insensitive equality; internally generated ids; validated external input). Document in README | Won't fix |
+| CQRS-2 | `UserDirectory` reads the DbContext directly | Won't fix: it is the Infrastructure adapter for the public contract; layering tests will cover its placement | Won't fix |
+| CQRS-3 | List sorts in memory; no paging | Won't fix: paging is out of scope (plan §9); in-memory sort is a provider quirk. README "with more time" | Won't fix |
+| FE-1 | Failure branch repeated in 4 endpoints | Won't fix: 5 explicit lines per endpoint beat an extra abstraction at this size | Won't fix |
+| FE-3 | Nullable request records | Won't fix: a consequence of decision #13 (validation lives only in value objects). Explain in README | Won't fix |
+| MT-1 | No Users handler tests | Won't fix: the API tests cover the uniqueness branch; WorkItems handler tests exist to show isolation | Won't fix |
+| MT-2 | Uniqueness check isn't race-safe | Won't fix: a known in-memory limitation, closed by the unique index on SQL. README | Won't fix |
+| MT-3 | EF conversions throw on corrupt stored data | Won't fix: corrupt persisted data is exceptional; throwing is correct | Won't fix |
+| — | `IUserDirectory` registration is only verified at runtime | Won't fix: DI validation can't see FastEndpoints handler dependencies; API tests fail immediately if it is missing | Won't fix |
+| — | Empty `WorkItems.Contracts` | Won't fix: kept so both modules have the same shape (plan §1) | Won't fix |
 
 ## Corrections
 
@@ -39,6 +65,7 @@ Places where Claude's earlier output was wrong and was fixed (by Claude or by me
 | --- | --- | --- | --- |
 | 1 | `.claude/hooks/save-plan.mjs` read the plan from `tool_input.plan`, but in the current Claude Code version (2.1.x) ExitPlanMode takes no input and returns `{ plan, filePath }` in `tool_response`. The approved architecture plan (2026-10-07 21:36) was never snapshotted, and the failure was silent. | Claude noticed `ai-journey/plans/` was missing right after the approval. | The hook now reads `tool_input.plan`, then `tool_response.plan`, then the file at `tool_response.filePath`, and writes a warning to stderr if none is found. Tested against the real payload from the transcript (output matched the approved plan) and an empty payload (warning, exit 0). The missed snapshot was back-filled from the transcript as `plans/01_2026-10-07_2136.md`, with a header saying so. |
 | 2 | Claude asked how to commit slice 0 (decision #17) based on a `git status` snapshot from the start of the session, without re-checking. The user had already committed it as `c8ef295`. | Claude noticed when staging files for the "first" commit: `git status` no longer showed them as untracked. | History was not rewritten; #17 was updated to record the real outcome. Lesson: check `git log`/`git status` right before asking about repository state. |
+| 4 | Claude's code made claims the code didn't back up. `Messages.cs` (slice 0) said the markers "let architecture tests enforce" the CQRS split, but no such test was ever written (it was deferred to slice 6 without changing the comment). `WorkItemConfiguration.cs` kept a "(next slice)" note after that slice shipped. | The independent review subagent (CQRS-1, CL-3). Claude's own slice summaries had flagged slice 6 as pending but never connected that to the comment's claim. | To be fixed per decision #26: add the missing architecture tests so the comment becomes true; correct the stale comment. |
 | 3 | The approved architecture plan was internally inconsistent. §5 said "query handlers use the DbContext directly", while §1/§7 forbid Application → Infrastructure, which is where `UsersDbContext` lives. Followed literally, the first query handler would break the planned architecture test. | Claude, while designing the GetUserById slice, before writing code. | Resolved by decision #20: a read-store port in Application, implemented in Infrastructure. `plan.md` is left unchanged (history); this entry and #20 supersede plan §5's read-side wording. |
 
 ## Where I overrode the AI

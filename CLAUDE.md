@@ -64,6 +64,7 @@ Warnings are errors. Package versions live only in `Directory.Packages.props` (c
 - Exercise the API: `requests.http` at the repo root (all 4 endpoints + one error case each; run top to bottom,
   ids flow via named requests). Data is in-memory and resets on every restart.
 
-Layout: `src/Host` (composition root), `src/BuildingBlocks` (Result/Error, CQRS markers, error→problem-details),
+Layout: `src/Host` (composition root), `src/BuildingBlocks.Results` (Result/Error; zero dependencies, the only
+building block Domain may use), `src/BuildingBlocks` (CQRS markers over FastEndpoints, error→problem-details),
 `src/Modules/<Module>/<Module>` (internal layers as folders) + `src/Modules/<Module>/<Module>.Contracts` (public surface),
 `tests/{Architecture,Users,WorkItems,Api}.Tests`. Register a new module in `src/Host/Program.cs` (`o.Assemblies`) and in `tests/Architecture.Tests/Modules.cs`.

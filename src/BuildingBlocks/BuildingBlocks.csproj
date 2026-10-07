@@ -1,7 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Application/web building blocks: CQRS markers over FastEndpoints, Error -> problem-details mapping. -->
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BuildingBlocks.Results\BuildingBlocks.Results.csproj" />
   </ItemGroup>
 
 </Project>

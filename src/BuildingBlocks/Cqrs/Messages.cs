@@ -1,7 +1,9 @@
 namespace BuildingBlocks.Cqrs;
 
 // Thin markers over the FastEndpoints command bus. The bus itself has no notion of "query",
-// so these interfaces make the CQRS split explicit and let architecture tests enforce it.
+// so these interfaces make the CQRS split explicit and let architecture tests enforce it
+// (tests/Architecture.Tests/CqrsTests.cs: naming and location, commands return only an id,
+// query handlers never use repositories).
 
 /// <summary>Changes state. By convention returns at most the identifier of what it created.</summary>
 public interface ICommand<TResult> : FastEndpoints.ICommand<TResult>

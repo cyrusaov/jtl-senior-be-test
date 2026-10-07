@@ -318,3 +318,9 @@ fix / won't fix (with reason). I decide. Log the outcome in ai-journey/decisions
 ### 2026-10-07 23:44 · session `8afeacf8`
 
 yes, start with framework-free Results
+
+---
+
+### 2026-10-07 23:50 · session `8afeacf8`
+
+Continue with the layering and command/query architecture tests (finding CQRS-1)

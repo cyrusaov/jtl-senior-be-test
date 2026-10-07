@@ -2256,3 +2256,156 @@ Next, I'd do the fixes in this order:
 4. The README last, so it describes the final state.
 
 Each step ends green with its own commit. Should I start?
+
+---
+
+## 🧑 Me
+
+yes, start with framework-free Results
+
+**🤖 Claude:**
+
+Starting the framework-free Results step. The plan:
+- **New project:** `src/BuildingBlocks.Results`, with no package or project references. `Error.cs` and `Result.cs` move into it with `git mv`, keeping the `BuildingBlocks.Results` namespace, so no consuming code changes.
+- **References:** `BuildingBlocks` (CQRS markers and the HTTP mapping) references it. Each module references it explicitly too, so the domain's dependency is visible in its `.csproj`.
+- **Architecture tests:**
+  - `BuildingBlocks.Results` may reference only the base class library;
+  - each module's `Domain` namespace must not depend on FastEndpoints, ASP.NET Core, EF Core, `BuildingBlocks.Cqrs` or `BuildingBlocks.Http`.
+- **Fail-first:** make both tests go red with an injected violation, then revert.
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Next, the explicit references in both module projects:
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+All three violations were caught by name, and the revert left only the intended changes. CLAUDE.md's layout line still says Result/Error live in `BuildingBlocks`, so I'll update it:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+The domain no longer depends, even indirectly, on FastEndpoints or ASP.NET. This fixes review finding DDD-2 and is committed as `53a4215`. `dotnet build` is clean and all 69 tests pass: 19 Users, 19 WorkItems, 11 architecture, 20 API.
+
+**What changed**
+- **New project `src/BuildingBlocks.Results`** holds only `Result<T>` and `Error`, with no package or project references. The two files were moved with `git mv`, so git shows them as renames and their history follows.
+- **No consuming code changed.** The namespace stayed `BuildingBlocks.Results`; only `.csproj` files were edited.
+- **References:** `BuildingBlocks` (the command/query markers and the error-to-HTTP mapping) now references the new project. Both module projects reference it explicitly, with a comment that the domain uses only `BuildingBlocks.Results`.
+
+**New architecture tests**
+- `Results_kernel_depends_only_on_the_base_class_library`.
+- `Domain_does_not_depend_on_any_framework`, run for Users and WorkItems. A module's `Domain` namespace must not use FastEndpoints, FluentValidation, ASP.NET Core, EF Core, `BuildingBlocks.Cqrs` or `BuildingBlocks.Http`.
+- The shared assertion and base-class-library helpers moved into `RuleHelpers.cs`, so the boundary tests and these use the same code.
+
+**Shown to catch violations:** I injected three:
+- a `Users.Domain` type implementing a FastEndpoints interface;
+- a `WorkItems.Domain` type using EF Core's `DbContext`;
+- the Results project taking a FastEndpoints package reference.
+
+All three tests went red, each naming the offending type (`Users.Domain.UserCreated`, `WorkItems.Domain.LeakyQuery`). After reverting, the full suite was green and `git status` showed only the intended changes.
+
+**Also in the commit**
+- CLAUDE.md's layout line now describes both BuildingBlocks projects.
+- The pending ai-journey updates: decision #26 (review triage), the independent-review section, and Correction #4.
+
+Next is the layering and command/query architecture tests (finding CQRS-1), which also makes the claim in `Messages.cs` true.

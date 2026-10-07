@@ -31,6 +31,9 @@ Raw Q&A evidence: [`questions-raw.md`](./questions-raw.md).
 | 24 | 2026-10-07 | Order of `GET /work-items?assigneeId=` results (WorkItem has no timestamp) | (a) by name, then id; (b) add `CreatedAt`, newest first; (c) unspecified order | (a) | (a) | No | Deterministic and easy to test, with no domain change. (b) needs a new field plus a `TimeProvider` abstraction, beyond the time box; noted for the README's "with more time". |
 | 25 | 2026-10-07 | Convention drift found in the Users ↔ WorkItems review | (1) read-store ports: `IUserReadStore` took a raw `Guid`, `IWorkItemReadStore` a domain `AssigneeId` → align on domain types; (2) API test helpers: Users has a shared `UsersApi`, WorkItems tests use private helpers and duplicated records → add `WorkItemsApi` | Fix both | Fix (1) only | Partly: I declined (2) | (1) sets the rule "messages carry primitives; ports take domain types". (2) left as is: test-only code, low value within the time box. |
 | 26 | 2026-10-07 | Triage of the independent review (see [Independent review](#independent-review-2026-10-07)) | Per finding: fix / won't fix | Fix CL-1/2/3, CQRS-1/MT-4, DDD-2, FE-2; won't fix the rest | Same as proposed | No | Fixes target the false claim in `Messages.cs`, the missing README (Clarity 2/5), and the framework dependency leaking into the domain. Won't-fixes are deliberate trade-offs to be explained in the README. |
+| 27 | 2026-10-08 | What happens to the template `README.md` | (a) replace it with the solution README; (b) prepend the solution README and keep the template below | (a) | (a) | No | The task text survives in `senior-backend-engineer/instructions.md`; reviewers see the design first, not boilerplate. |
+| 28 | 2026-10-08 | README length (the task asks for "about half a page") | (a) a half-page core (summary, quick start, architecture, flow, decisions) plus short bullet extras; (b) strictly half a page, everything else linked; (c) a full ~2-page write-up | (a) | (a) | No | Meets the brief while still covering "what would you do differently". |
+| 29 | 2026-10-08 | README sections | (a) keep all 9 outlined sections; (b) drop "Known limitations"; (c) add a sequence diagram | (a) | (b) + (c): drop the limitations section (the race caveat moves into the Persistence row of the decisions table) and add a mermaid sequence diagram for `POST /work-items` | **Yes** | I preferred a shorter page plus a visual of the one cross-module interaction over a separate list of limitations. The first answer was ambiguous (all three options selected), so Claude asked again before acting. |
 
 ## Independent review (2026-10-07)
 
@@ -73,6 +76,9 @@ Places where Claude's earlier output was wrong and was fixed (by Claude or by me
 Short narrative of the most important overrides (feeds into [`judgment.md`](./judgment.md)).
 
 _None yet. In the requirements phase (#1–#8) and the architecture phase (#9–#16), all on 2026-10-07, every recommended default was accepted. #10 deliberately revisited #7 once Mediator (source-generated) was added to the comparison, and the original choice held._
+
+- **#25 (2026-10-07), consistency fixes:** Claude recommended fixing both drifts found in the Users ↔ WorkItems review. I kept only the read-store port fix and declined the test-helper refactor as low value for test-only code.
+- **#29 (2026-10-08), README sections:** Claude recommended keeping a "Known limitations" section and adding no diagram. I dropped the section (the most important caveat moved into the decisions table) and asked for a sequence diagram of the one cross-module call. The aim was a shorter README that shows the module interaction visually.
 
 ## Hiring contact message
 

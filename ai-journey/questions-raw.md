@@ -239,3 +239,42 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - Swagger response types — FE-2: declare success + problem-details response types per endpoint so Swagger shows error schemas. Recommended: ~4 lines.
 
 ➡️ **My answer:** README + stale comment, Layering + CQRS arch tests, Framework-free Results, Swagger response types
+
+---
+
+### 2026-10-08 00:12
+
+**Q (Template): What happens to the existing template README.md at the repo root?**
+
+- Replace it (Recommended) — Root README becomes the solution README. The task text survives in senior-backend-engineer/instructions.md, so nothing is lost; reviewers see your design first, not boilerplate.
+- Prepend, keep template below — Solution README on top, template under a 'Original task' heading. Nothing removed, but the page gets long and the boilerplate dilutes the half-page brief.
+
+➡️ **My answer:** Replace it (Recommended)
+
+**Q (Length): The task asks for 'about half a page'. How long should it be?**
+
+- Half-page core + short extras (Recommended) — Sections 0–4 fit roughly half a page (what the task asks for); 5–8 are terse bullet lists below. ~100–120 lines total. Respects the brief while still answering 'what would you do differently'.
+- Strict half page — Only quick start, boundaries, flow, top 4 decisions, 'with more time'; everything else via links to ai-journey/. Shortest, but tests/limitations become invisible unless the reviewer clicks through.
+- Full write-up (~2 pages) — All sections with prose and rationale inline. Most complete; clearly exceeds the requested length.
+
+➡️ **My answer:** Half-page core + short extras (Recommended)
+
+**Q (Sections): Any section to drop or add?**
+
+- Keep all 9 as outlined (Recommended) — 0–8 as listed above.
+- Drop 'Known limitations' — Fold the most important one (race) into the decisions table; shorter, but hides deliberate trade-offs a reviewer would ask about.
+- Add a sequence diagram — Mermaid sequence for POST /work-items crossing both modules. Visual, ~15 lines; partially duplicates section 3.
+
+➡️ **My answer:** Keep all 9 as outlined (Recommended), Drop 'Known limitations', Add a sequence diagram
+
+---
+
+### 2026-10-08 00:12
+
+**Q (Clarify): Your section answer selected 'Keep all 9' together with 'Drop Known limitations' and 'Add a sequence diagram'. Which did you mean?**
+
+- Drop limitations, add diagram (Recommended) — Read it as 'keep the rest as outlined': remove section 6, fold the race-condition caveat into the decisions table (Persistence row), and add a mermaid sequence diagram for POST /work-items in section 3.
+- Keep all 9 + add diagram — Keep 'Known limitations' after all, and add the sequence diagram.
+- Keep all 9 exactly — Ignore the other two selections; no diagram, limitations stay.
+
+➡️ **My answer:** Drop limitations, add diagram (Recommended)

@@ -2493,3 +2493,318 @@ _tools: Edit_
 
 
 _tools: Bash_
+
+**🤖 Claude:**
+
+The layering and command/query rules now exist and pass, so the claim in `Messages.cs` is finally true. Committed as `425e38a`. `dotnet build` is clean, and all 83 tests pass: 19 Users, 19 WorkItems, 25 architecture, 20 API.
+
+## New rules
+**`LayeringTests`**: one check for each module and layer, 8 in total.
+
+| Layer | Must not depend on |
+|---|---|
+| Domain | its own Application, Infrastructure, Endpoints |
+| Application | its own Infrastructure, Endpoints; EF Core; ASP.NET Core; `BuildingBlocks.Http` |
+| Infrastructure | its own Endpoints |
+| Endpoints | its own Domain, Infrastructure; EF Core |
+
+Application may depend on FastEndpoints, because the command/query markers are built on its command bus (decision #10). The Endpoints rule is what keeps endpoints thin: they can only reach the Application layer.
+
+**`CqrsTests`**: one check for each module, 6 in total.
+- Anything implementing `ICommand<>` is named `*Command`, anything implementing `IQuery<>` is named `*Query`, and the reverse. Both live in `<Module>.Application`.
+- Commands return only `Result<Guid>`, which enforces "commands return at most an id".
+- Query handlers never depend on a `*Repository` interface, so the read side can't reach the write side.
+
+Every rule first asserts that it found something to check. Without that, a renamed namespace would make it pass with nothing checked.
+
+## Shown to catch violations
+I added 6 deliberate violations, ran the tests, then reverted:
+
+| Injected violation | Caught by |
+|---|---|
+| `Users.Domain` type using an Application DTO | Layering (Users/Domain) |
+| `Users.Application` type using `UserReadStore` (Infrastructure) | Layering (Users/Application) |
+| `WorkItems.Endpoints` type using `WorkItemName` (Domain) | Layering (WorkItems/Endpoints) |
+| Query handler with `IWorkItemRepository` injected | Query handlers never touch the write side |
+| `RenameCommand : ICommand<Result<WorkItemDto>>` | Commands return at most an id |
+| `FetchEverything : IQuery<…>` (wrong name) | Naming and location |
+
+All 6 failed as expected, and the layering and query-handler messages named the offending type. After the revert, `src/` was clean and the full suite was green.
+
+## Also in the commit
+- The `Messages.cs` comment now names the test file and the three rules behind its claim.
+- Correction #4 in `decisions.md` is marked fixed.
+
+**Remaining review fixes:**
+- **Swagger response types (FE-2):** declare success and error types on each endpoint.
+- **README and stale comment (CL-1/2/3):** the solution README, plus fixing the stale "(next slice)" comment in `WorkItemConfiguration.cs`.
+
+---
+
+## 🧑 Me
+
+Continue with Swagger response types (FE-2): declare success and error types on each endpoint.
+
+**🤖 Claude:**
+
+First I'll check what Swagger emits today, and confirm the FastEndpoints API for declaring problem-details responses:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+Now the contract test. It reads `swagger.json` from the in-process host and asserts every operation's documented statuses and schemas:
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+Swagger now documents each endpoint's real success response and every error it can return. This fixes review finding FE-2 and is committed as `754f088`. `dotnet build` is clean and all 87 tests pass: 19 Users, 19 WorkItems, 25 architecture, 24 API.
+
+## What Swagger shows now
+| Endpoint | Before | After |
+|---|---|---|
+| `POST /users` | 200 only | **201** `CreateUserResponse` · 400, 409 as `ProblemDetails` |
+| `GET /users/{id}` | 200 only | 200 `GetUserByIdResponse` · 400, 404 as `ProblemDetails` |
+| `POST /work-items` | 200 only | **201** `CreateWorkItemResponse` · 400, 422 as `ProblemDetails` |
+| `GET /work-items` | 200 only | 200 array · 400 as `ProblemDetails` |
+
+Before, both POSTs were documented as returning 200, which was wrong. Every error response is now documented as `application/problem+json`. The documented `ProblemDetails` has the same fields as the error bodies the API actually sent in the `requests.http` run: `type`, `title`, `status`, `instance`, `traceId`, `detail`, and `errors[]` with `name`, `reason`, `code`. Schema names are now short, e.g. `CreateUserResponse` instead of `UsersEndpointsCreateUserCreateUserResponse`.
+
+## A bug the new test caught
+I first used FastEndpoints' `ProducesProblemFE`, assuming it meant "FastEndpoints problem details". It actually declares FastEndpoints' older `ErrorResponse` type, so Swagger would have described error bodies we never send.
+
+The new `OpenApiContractTests` caught this on its first run: it expected `400:ProblemDetails` and got `400:ErrorResponse`. I checked the FastEndpoints docs, switched to `ProducesProblemDetails`, and the test passed. The test now pins the documented status codes and schemas for each endpoint, so the docs can't quietly drift from the code again.
+
+## Changes
+- **The four endpoint `Configure` methods** each gained one `Description(...)` call. It removes the incorrect default 200 on the POSTs and declares the real success and error responses.
+- **`Program.cs`:** turned on `ShortSchemaNames`.
+- **`tests/Api.Tests/OpenApiContractTests.cs`:** new, one case per endpoint.
+
+The last open review fix is the README (CL-1/2) plus the stale "(next slice)" comment (CL-3). Shall I draft the README outline for you to approve before I write it?
+
+---
+
+## 🧑 Me
+
+Give me the draft of README outline for my reviewing first.
+
+**🤖 Claude:**
+
+Here's the proposed README outline. It replaces the template `README.md` at the repo root. Each section lists its content and roughly how long it would be.
+
+## README outline: JTL Users & Work Items (modular monolith)
+
+**0. One-line summary** (2 lines)
+.NET 8 modular monolith with two modules, Users and WorkItems, built with FastEndpoints, CQRS and DDD. It has four endpoints, an in-memory store per module, and module boundaries enforced by architecture tests.
+
+**1. Quick start** (~8 lines)
+- `dotnet build` · `dotnet test` (87 tests) · `dotnet run --project src/Host`
+- Swagger at `http://localhost:5000/swagger`; `requests.http` walks through all four endpoints, including one error case each.
+- Requires: .NET 8 runtime; any .NET 8+ SDK builds it. Data resets on restart.
+
+**2. Architecture at a glance** (one mermaid diagram + ~5 bullets)
+- Diagram: project references. Host → modules; WorkItems → `Users.Contracts` only; `BuildingBlocks.Results` has no dependencies.
+- Each module is two projects: the implementation, with its layers as `internal` folders, and a public `*.Contracts` project (decision #9).
+- Each module owns its data: its own DbContext and schema, and no cross-module joins or foreign keys.
+- The only cross-module call is `IUserDirectory.ExistsAsync(Guid)`, made synchronously and in-process (decisions #2, #11, #23).
+
+**3. How a request flows** (~8 lines, two arrow chains)
+- Command: Endpoint → `*Command` → handler → value objects / aggregate → repository → DbContext. It returns `Result<Guid>`.
+- Query: Endpoint → `*Query` → handler → read store (no tracking, projected straight to DTOs) → DTO. The aggregate is never loaded.
+- Errors: value objects and handlers return an `Error` (Validation / NotFound / Conflict / Unprocessable). One helper turns it into problem details with a stable `code` (400/404/409/422).
+
+**4. Key decisions & trade-offs** (table, ~8 rows, each linking to `ai-journey/decisions.md#…`)
+| Decision | Chosen | Trade-off accepted |
+|---|---|---|
+| Project layout | Module + Contracts | Layering is test-enforced, not compiler-enforced |
+| CQRS dispatcher | FastEndpoints bus + own markers | The Application layer depends on FastEndpoints; MediatR's license / Mediator's public handlers avoided |
+| Assignee check | Sync contract | Runtime coupling vs events + local read model |
+| Unknown user in list | 200 `[]` | Can't tell "no user" from "no items" |
+| Read side | Read-store interface per query | One small interface per read use case |
+| Validation | Value objects only | Errors come one at a time; nullable request records |
+| Errors | `Result` + problem details | A small Result type instead of exceptions |
+| Persistence | EF Core InMemory, per module | No real unique constraint (see limitations) |
+
+**5. What the tests enforce** (~6 lines)
+- **Architecture:**
+  - module boundaries: the Contracts-only rule; Contracts reference only the base class library; only the entry point is public;
+  - a framework-free domain;
+  - layer direction;
+  - the command/query rules: naming, commands return only an id, query handlers never use repositories.
+- **Other suites:** domain unit tests; WorkItems handler tests with a faked Users contract (module isolation); black-box API tests, including the OpenAPI contract.
+
+**6. Known limitations** (~5 bullets, the review's deliberate won't-fixes)
+- Username uniqueness is check-then-insert, so not race-safe on InMemory; SQL's unique index closes this.
+- The list is sorted in memory and has no paging.
+- The error field names (`"username"`, `"assigneeId"`) live in the domain error lists.
+- The four endpoints each repeat the same failure-handling block.
+
+**7. With more time** (~6 bullets)
+- An integration event (`UserCreated`) with a local read model in WorkItems, replacing the synchronous call.
+- SQL with migrations and a schema per module; paging; a `CreatedAt` field for newest-first ordering.
+- Upgrade to .NET 10 LTS (.NET 8 support ends 2026-11-10).
+- Users handler tests; a shared result-to-response helper if the endpoint count grows.
+
+**8. AI journey** (2 lines)
+A link to `ai-journey/`: the plan, decisions, prompts, toolchain and judgment, plus the independent review and how it was triaged.
+
+---
+
+I'll also fix the separate CL-3 item, the stale "(next slice)" comment in `WorkItemConfiguration.cs`, in the same commit.
+
+Three choices shape the final text, so I'd like your call on them:
+
+**🤖 Claude:**
+
+
+
+_tools: AskUserQuestion_
+
+**🤖 Claude:**
+
+Your answers to the third question pull in two directions: "keep all 9" alongside "drop Known limitations" and "add a sequence diagram". I'll confirm before logging anything.
+
+**🤖 Claude:**
+
+
+
+_tools: AskUserQuestion_
+
+**🤖 Claude:**
+
+That settles it. Logging the three README decisions. You didn't take my recommendation on which sections to include, so that one goes in as an override:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_

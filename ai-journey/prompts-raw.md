@@ -330,3 +330,15 @@ Continue with the layering and command/query architecture tests (finding CQRS-1)
 ### 2026-10-07 23:56 · session `8afeacf8`
 
 Continue with Swagger response types (FE-2): declare success and error types on each endpoint.
+
+---
+
+### 2026-10-07 23:58 · session `8afeacf8`
+
+Give me the draft of README outline for my reviewing first.
+
+---
+
+### 2026-10-08 00:17 · session `8afeacf8`
+
+Go ahead

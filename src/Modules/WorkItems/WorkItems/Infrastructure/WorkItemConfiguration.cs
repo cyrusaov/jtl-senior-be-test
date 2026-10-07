@@ -28,7 +28,7 @@ internal sealed class WorkItemConfiguration : IEntityTypeConfiguration<WorkItem>
             .HasColumnName("assignee_id")
             .IsRequired();
 
-        // Supports the "list by assignee" query (next slice).
+        // Supports the "list by assignee" query (GetWorkItemsByAssignee).
         workItem.HasIndex(w => w.AssigneeId);
     }
 }

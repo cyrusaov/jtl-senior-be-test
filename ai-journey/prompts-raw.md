@@ -136,3 +136,23 @@ module offers to other modules.
 Explain in 3–4 sentences why this contract shape, and log it in decisions.md.
 Run build + tests, suggest a commit message.
 </pasted_content id="8051">
+
+---
+
+### 2026-10-07 23:16 · session `8afeacf8`
+
+<pasted_content id="8051">
+Implement slice "WorkItems: CreateWorkItem" from ai-journey/plan.md.
+
+- Domain: WorkItem aggregate, WorkItemId, WorkItemName value object, and an AssigneeId type
+  owned by WorkItems (do NOT reuse Users' UserId). Enforce invariants in the domain.
+- Application: CreateWorkItemCommand + handler. Assignee validation goes through
+  Users.Contracts only, as decided in decisions.md. Returns only the new id.
+- Persistence: WorkItems' own store; no access to Users data.
+- Endpoint: POST, thin; error mapping consistent with the Users module
+  (e.g. unknown assignee → the status code we agreed).
+- Tests: domain unit tests; a handler test with the Users contract faked (show how the module
+  is testable in isolation); one endpoint integration test across both modules.
+
+Ask me before deviating from the plan. Run build + tests, summarise, suggest a commit message.
+</pasted_content id="8051">

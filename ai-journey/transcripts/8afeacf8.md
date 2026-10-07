@@ -1249,3 +1249,133 @@ f6f8f58 feat(users): get user by id
 It includes the ai-journey updates: decisions #20–#22 and Correction #3.
 
 The next slice exposes the `IUserDirectory` contract for WorkItems.
+
+---
+
+## 🧑 Me
+
+
+
+<pasted_content id="8051">
+Implement slice "Users.Contracts" from ai-journey/plan.md — the public surface the Users
+module offers to other modules.
+
+- Expose only what WorkItems needs (e.g. an existence check for a user id) as an interface
+  plus contract DTOs in Users.Contracts. Contracts must not reference Users domain types.
+- Implement it inside the Users module (internal), registered via the module's DI extension.
+- Extend the architecture tests: other modules may reference Users.Contracts only, never
+  Users.Domain / Application / Infrastructure. Make the test fail first (temporarily) to prove
+  it actually catches a violation, then revert.
+
+Explain in 3–4 sentences why this contract shape, and log it in decisions.md.
+Run build + tests, suggest a commit message.
+</pasted_content id="8051">
+
+
+**🤖 Claude:**
+
+Most of this slice was settled earlier: decision #2 (validate the assignee synchronously), #11 (a facade interface, not a query on the bus) and the plan (plain `Guid` across the boundary). One point is still open, because your prompt mentions contract DTOs while #11 has the contract return only a `bool`:
+
+**🤖 Claude:**
+
+
+
+_tools: AskUserQuestion_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Read_
+
+**🤖 Claude:**
+
+
+
+_tools: Edit_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+All four rules caught the violations, 5 failures in total. WorkItems' visibility test also failed, correctly, because my injected `Violation` class is itself `public`. Reverting:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+The revert is clean: only the slice's intended changes remain, and everything is green again. Committing:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_

@@ -203,3 +203,15 @@ _Captured automatically by a `PostToolUse(AskUserQuestion)` hook. Curated decisi
 - UserSummary? FindAsync(Guid) — Returns a contract DTO `UserSummary(Guid Id, string Username)` or null. Ready for e.g. showing assignee names. Cost: exposes data nobody consumes yet, and once published, every field is a promise other modules can start depending on.
 
 ➡️ **My answer:** bool ExistsAsync(Guid) (Recommended)
+
+---
+
+### 2026-10-07 23:21
+
+**Q (Ordering): In what order should GET /work-items?assigneeId= return items? (WorkItem has no timestamp today.)**
+
+- By name, then id (Recommended) — Deterministic, no domain change, easy to test. Cost: not 'newest first', which many UIs want; ordering is done in the read store (in-memory today, pushed to SQL later).
+- Add CreatedAt, newest first — Most realistic for a task list. Cost: new domain field + a TimeProvider abstraction for testable time, more scope than the plan (2–4h box).
+- Unspecified order — Least code; document that order is undefined. Cost: flaky-looking API and tests must compare as sets.
+
+➡️ **My answer:** By name, then id (Recommended)

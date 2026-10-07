@@ -1379,3 +1379,220 @@ The revert is clean: only the slice's intended changes remain, and everything is
 
 
 _tools: Bash_
+
+**🤖 Claude:**
+
+The Users contract is in and committed as `b5dc349`. `dotnet build` is clean, and all 38 tests pass: 19 domain, 8 architecture, 11 API.
+
+## Why this contract shape (decision #23)
+`Users.Contracts` exposes a single method: `IUserDirectory.ExistsAsync(Guid userId, ct)`. That's exactly what WorkItems needs to validate an assignee. It takes a plain `Guid` rather than Users' internal `UserId`, so no Users domain type crosses the module boundary. There's no DTO, because WorkItems has no use for user data yet, and every published field becomes a promise other modules can start depending on. The Contracts project depends on nothing but the base class library, so a consumer is only ever coupled to this one interface, and it's trivial to fake in WorkItems' tests.
+
+## What was added
+- **Contract:** `Users.Contracts/IUserDirectory.cs`, the only public type in the project.
+- **Implementation:** `Users/Infrastructure/UserDirectory.cs`, an `internal` class that checks the Users store without loading the aggregate. It's registered in `AddUsersModule`.
+- **Contract test:** `Api.Tests/Users/UserDirectoryContractTests.cs` gets `IUserDirectory` from the running app's dependency injection, the way WorkItems will. A created user exists; a random id doesn't.
+- **Architecture tests**, now 4 rules:
+  - (existing) a module doesn't reference another module's implementation assembly;
+  - (existing) a module's types don't use another module's `Domain`, `Application`, `Infrastructure` or `Endpoints` namespaces;
+  - (stricter) a Contracts project may reference **only the base class library**: no module implementation, BuildingBlocks, EF Core or FastEndpoints;
+  - (new) a module's implementation may expose publicly **only its `XModule` entry point**.
+
+## Proving the tests catch violations
+Because everything in Users is `internal`, WorkItems can't reach a Users internal without someone first making it `public`. So I injected that realistic two-step leak, and broke the contract separately:
+- `UserDto` made public, and WorkItems referencing the Users implementation to use it.
+- `Users.Contracts` referencing BuildingBlocks and returning its `Result<bool>`.
+
+All 4 rules went red, 5 failures in total, each naming its offender (for example `Offending types: WorkItems.Violation`). After reverting through git, `git status` showed only this slice's intended changes, and the full suite was green again.
+
+One case the tests can't cover: making `Users.Contracts` reference the Users implementation can't even compile, because Users already references Contracts and the reference would be circular.
+
+## Commit
+```
+b5dc349 feat(users): expose IUserDirectory contract for other modules
+```
+It includes the ai-journey update, decision #23.
+
+Next is the WorkItems create-work-item slice, the first real consumer of this contract.
+
+---
+
+## 🧑 Me
+
+
+
+<pasted_content id="8051">
+Implement slice "WorkItems: CreateWorkItem" from ai-journey/plan.md.
+
+- Domain: WorkItem aggregate, WorkItemId, WorkItemName value object, and an AssigneeId type
+  owned by WorkItems (do NOT reuse Users' UserId). Enforce invariants in the domain.
+- Application: CreateWorkItemCommand + handler. Assignee validation goes through
+  Users.Contracts only, as decided in decisions.md. Returns only the new id.
+- Persistence: WorkItems' own store; no access to Users data.
+- Endpoint: POST, thin; error mapping consistent with the Users module
+  (e.g. unknown assignee → the status code we agreed).
+- Tests: domain unit tests; a handler test with the Users contract faked (show how the module
+  is testable in isolation); one endpoint integration test across both modules.
+
+Ask me before deviating from the plan. Run build + tests, summarise, suggest a commit message.
+</pasted_content id="8051">
+
+
+**🤖 Claude:**
+
+Nothing here needs to deviate from the plan. Two details the plan doesn't spell out, both handled the existing way:
+- **A missing or empty `assigneeId`** is invalid input: 400 with `workitems.assignee.required`. Under decision #13 that check lives in the `AssigneeId` value object. The request field is `Guid?`, so a missing value can't silently bind as `Guid.Empty`.
+- **No `Location` header on `POST /work-items`.** The plan's contract is `201 { id }`, and there's no `GET /work-items/{id}` for it to point at.
+
+Checking repo state, then writing the domain:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+Next the application layer, then infrastructure and the endpoint:
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+The build is green. Now the tests, starting with the WorkItems unit-test project. The handler tests use hand-written fakes for `IUserDirectory` and the repository, with no mocking library:
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Write_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_
+
+**🤖 Claude:**
+
+
+
+_tools: Bash_

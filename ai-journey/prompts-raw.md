@@ -156,3 +156,21 @@ Implement slice "WorkItems: CreateWorkItem" from ai-journey/plan.md.
 
 Ask me before deviating from the plan. Run build + tests, summarise, suggest a commit message.
 </pasted_content id="8051">
+
+---
+
+### 2026-10-07 23:18 · session `8afeacf8`
+
+<pasted_content id="8051">
+Implement slice "WorkItems: GetWorkItemsByAssignee" from ai-journey/plan.md.
+
+- Query + handler returning a list of DTOs; no state change.
+- Behaviour for an unknown user id exactly as recorded in decisions.md (404 vs empty list).
+  If that requires calling Users.Contracts, do it in the handler, not the endpoint.
+- Endpoint: GET by assignee user id, thin.
+- Tests: integration test — create user, create two work items, list them; plus the
+  unknown-user case.
+
+Then review the whole WorkItems module against the Users module for consistency and list
+any differences in conventions. Run build + tests, suggest a commit message.
+</pasted_content id="8051">

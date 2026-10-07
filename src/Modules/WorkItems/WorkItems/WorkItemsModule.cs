@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using WorkItems.Application.GetWorkItemsByAssignee;
 using WorkItems.Domain;
 using WorkItems.Infrastructure;
 
@@ -18,6 +19,7 @@ public static class WorkItemsModule
         services.AddDbContext<WorkItemsDbContext>(o => o.UseInMemoryDatabase(WorkItemsDbContext.Schema, store));
 
         services.AddScoped<IWorkItemRepository, WorkItemRepository>(); // write side
+        services.AddScoped<IWorkItemReadStore, WorkItemReadStore>();   // read side
 
         return services;
     }

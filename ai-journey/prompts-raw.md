@@ -342,3 +342,9 @@ Give me the draft of README outline for my reviewing first.
 ### 2026-10-08 00:17 · session `8afeacf8`
 
 Go ahead
+
+---
+
+### 2026-10-08 14:10 · session `40df2274`
+
+commit với message: docs(ai-journey): write judgment, fix toolchain
